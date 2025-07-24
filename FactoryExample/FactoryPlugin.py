@@ -7,6 +7,7 @@ Created on Wed Jul 23 14:08:55 2025
 
 import gymnasium as gym
 import simpy
+import Framework.ScriptGenerator as Movie
 
 class FactoryPlugin:
     
@@ -22,6 +23,7 @@ class FactoryPlugin:
     
     def __init__(self, generatesMovie):
         self.__generatesMovie = generatesMovie
+      
     
     @property
     def ActionArray(self):
@@ -77,11 +79,15 @@ class FactoryPlugin:
 
         Returns
         -------
-        list
-            The list with the movie log entries.
+        Type
+            The movie script also closes the movie script.
 
         '''
-        return []
+        
+        assert self.__generatesMovie, "We must be in movie generation mode."
+        self.__movie.CloseAllEntries(self.__env.now)
+        return self.__movie
+    
     
     def GetObservationSpace(self):
         '''
@@ -143,25 +149,40 @@ class FactoryPlugin:
 
         '''
       
+        actorCode = f"A{actorChosen}"
         
         # In this case we are working
         if localAction == 0:
+            if self.__movie:
+                self.__movie.AddAction(self.__env.now
+                                      , actorCode, 
+                                      {'State': 'Working' , 
+                                       'Station' : self.__workerAtOrGoingToStation[actorChosen]})
             self.__workerCurrentlyInTransfer[actorChosen] = False
             # Check if we are at the first station.
             if self.__workerAtOrGoingToStation[actorChosen] == 0:
                 yield self.__env.timeout(5.0) # We work 5 seconds at station 0
                 yield self.__fillingOfDepot[0].put(1) # We fill in 1 unit in depot 1
+                if self.__movie:
+                    self.__movie.AddAction(self.__env.now, 'DA',  self.__fillingOfDepot[0].level)
                 self.__rewward += 0.01 # We add a small reward for doing a first processing step.
             elif self.__workerAtOrGoingToStation[actorChosen] in [1,2]:
                 # The other two stations transfer 1 unit.
                 yield self.__fillingOfDepot[0].get(1) # Get 1 unit.
+                if self.__movie:
+                    self.__movie.AddAction(self.__env.now, 'DA',  self.__fillingOfDepot[0].level)
                 yield self.__env.timeout(10.0) # Work for 10 seconds.
                 yield self.__fillingOfDepot[1].put(1) # Fills into the second depot.
+                if self.__movie:
+                    self.__movie.AddAction(self.__env.now, 'DB',  self.__fillingOfDepot[1].level)
                 self.__rewward += 0.01 # Get a small reward.
             else: # This must be the last station (3)
                 assert self.__workerAtOrGoingToStation[actorChosen] == 3, "This should be station 3"
                 yield self.__fillingOfDepot[1].get(1) # Get 1 unit.
+                if self.__movie:
+                    self.__movie.AddAction(self.__env.now, 'DB',  self.__fillingOfDepot[1].level)
                 yield self.__env.timeout(5.0) # We work 5 seconds 
+               
                 self.__rewward += 0.98 # Get finsh reward.
         else:
             # Here we are going to a station.
@@ -170,6 +191,13 @@ class FactoryPlugin:
             currentStation = self.__workerAtOrGoingToStation[actorChosen]
             self.__workerAtOrGoingToStation[actorChosen] = destination
             time = FactoryPlugin.TransferTime[currentStation][destination]
+            if self.__movie:
+                self.__movie.AddAction(self.__env.now
+                                      , actorCode, 
+                                      {'State': 'Walking' , 
+                                       'Station' : currentStation,
+                                       'Destination' : destination})
+                
             yield self.__env.timeout(time)
             
     
@@ -226,6 +254,13 @@ class FactoryPlugin:
         self.__rewward = 0.0
         self.__env = simPyEnv
         
+        if self.__generatesMovie:
+            self.__movie = Movie.ScriptGenerator()
+            self.__movie.AddAction(0, 'DA', 0)
+            self.__movie.AddAction(0, 'DB', 0)
+            self.__movie.AddAction(0, 'A0', {'State': 'Working' , 'Station' : 0})
+            self.__movie.AddAction(0, 'A1', {'State': 'Working' , 'Station' : 1})
+        
         
         
         self.__workerCurrentlyInTransfer = [False, False]
@@ -238,6 +273,8 @@ class FactoryPlugin:
         '''Contains the filling of the current depot'''
         self.__stationOccupied = [True, True, False, False]
         '''Contains the information if the station is currently occupied'''
+        
+      
         
     def GetObservation(self):
         '''

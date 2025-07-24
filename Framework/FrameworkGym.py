@@ -184,6 +184,6 @@ class FrameworkGym(gym.Env):
 
 
 
-gym.register("gymnasium/Processing", entry_point=FrameworkGym)
+# gym.register("gymnasium/Processing", entry_point=FrameworkGym)
    
 
