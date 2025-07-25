@@ -9,10 +9,11 @@ import pygame as pg
 
 
 class ProgressBarPainter():
-    def __init__(self, maxEntries, insetWidth, width, height, color):
+    def __init__(self, maxEntries, insetWidth, width, height, bgColor,  fgColor):
         self.__maxEntries = maxEntries
         self.__insetWidth = insetWidth
-        self.__color = color
+        self.__bgColor = bgColor
+        self.__fgColor = fgColor
         self.__drawSurface = pg.Surface((width, height))
         
         
@@ -25,9 +26,9 @@ class ProgressBarPainter():
         stepHeight = height / self.__maxEntries
         xPos = self.__insetWidth
         yPos = self.__insetWidth
-        self.__drawSurface.fill("Grey")
+        self.__drawSurface.fill( self.__bgColor)
         for _ in range(entries):
-            pg.draw.rect(self.__drawSurface, self.__color, pg.Rect(xPos, yPos, targetWidth, targetHeight))
+            pg.draw.rect(self.__drawSurface,  self.__fgColor, pg.Rect(xPos, yPos, targetWidth, targetHeight))
             yPos += stepHeight
             
             

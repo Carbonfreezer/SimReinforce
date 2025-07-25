@@ -13,6 +13,8 @@ from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 
 
 import Framework.FrameworkGym as Frame
+import Framework.MovieMaker as Movie
+
 
 
 from sb3_contrib.common.maskable.utils import get_action_masks
@@ -92,3 +94,28 @@ def GenerateScript(modelSaveName, scriptName,  generator, optionalArgs = {}):
      
        
     info[0]['Script'].SaveScript(scriptName+".pkl")    
+    
+def GenerateMovieFromScript(scriptFilename, movieFilename, painterGenerator, fps, timeScale):
+    '''
+    Generates a movie from the previously generated script.
+
+    Parameters
+    ----------
+    scriptFilename : TYPE
+        The filename of the script.
+    movieFilename : TYPE
+        The movie filename we generate.
+    painterGenerator : TYPE
+        The class for the specific painting job.
+    fps : TYPE
+        The fps with which we render.
+    timeScale : TYPE
+        Time scale > 1 video is showing things faster than in reality.
+
+    Returns
+    -------
+    None.
+
+    '''
+    movie = Movie.MovieMaker(painterGenerator)
+    movie.MakeMovie(movieFilename, scriptFilename, fps, timeScale)

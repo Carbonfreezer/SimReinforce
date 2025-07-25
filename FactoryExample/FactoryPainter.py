@@ -13,7 +13,15 @@ class FactoryPainter:
     
     def __init__(self):
         self.__backGround = pg.image.load("Background.png")
-        self.__pointCollection = Pos.PositionExtractor("Positions.png")
+        self.__pointCollection = Pos.PositionExtractor([[527,115], 
+                                                        [184, 307],
+                                                        [883, 313],
+                                                        [516, 486],
+                                                        [192,594], # Side walking point A
+                                                        [888, 601], # Side walking point B
+                                                        [422,300], # First depot element
+                                                        [601, 300] # Second depot element
+                                                        ])
     
         
         self.__workerPositionCoordinates = [1, 0, 3, 2]
@@ -34,7 +42,7 @@ class FactoryPainter:
         self.__working = [pg.image.load("Working1.png"), pg.image.load("Working2.png")] 
         self.__travelling = [pg.image.load("Travelling1.png"), pg.image.load("Travelling2.png")]
         
-        self.__depotPaint = ProgPaint.ProgressBarPainter(10, 3, 80, 160, 'Blue')
+        self.__depotPaint = ProgPaint.ProgressBarPainter(10, 3, 80, 160, 'Grey', 'Blue')
         
                                                  
         
@@ -90,7 +98,7 @@ class FactoryPainter:
                Pos.PositionExtractor.PaintSprite(surface, drawingSprite, drawingPoint)
                
         elif actor == 'DA':
-           self.__depotPaint.paint(surface, (422, 300), 180, interpolationInformation)
+           self.__depotPaint.paint(surface,  self.__pointCollection.GetPoint(6), 180, interpolationInformation)
         else:
-           self.__depotPaint.paint(surface, (601, 300), 180, interpolationInformation) 
+           self.__depotPaint.paint(surface, self.__pointCollection.GetPoint(7), 180, interpolationInformation) 
     

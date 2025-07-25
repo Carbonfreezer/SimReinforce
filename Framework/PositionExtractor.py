@@ -9,13 +9,9 @@ import pygame as pg
 import numpy as np
 
 class PositionExtractor:
-    def __init__(self, imageFilename):
-        imageLoaded = pg.image.load(imageFilename)
-        pixels = pg.surfarray.array3d(imageLoaded)
-        mask = np.all(pixels == 255, axis=2)
-        coords = np.column_stack(np.where(mask))
+    def __init__(self, pointList):
         self.__font = pg.font.SysFont(None, 48)
-        self.__pointList = coords[coords[:, 1].argsort()]
+        self.__pointList = np.array( pointList )
         
         
     def DebugDraw(self, targetSurface):
