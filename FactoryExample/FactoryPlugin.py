@@ -23,6 +23,7 @@ class FactoryPlugin:
     
     def __init__(self, generatesMovie):
         self.__generatesMovie = generatesMovie
+
       
     
     @property
@@ -153,7 +154,7 @@ class FactoryPlugin:
         
         # In this case we are working
         if localAction == 0:
-            if self.__movie:
+            if self.__generatesMovie:
                 self.__movie.AddAction(self.__env.now
                                       , actorCode, 
                                       {'State': 'Working' , 
@@ -163,23 +164,23 @@ class FactoryPlugin:
             if self.__workerAtOrGoingToStation[actorChosen] == 0:
                 yield self.__env.timeout(5.0) # We work 5 seconds at station 0
                 yield self.__fillingOfDepot[0].put(1) # We fill in 1 unit in depot 1
-                if self.__movie:
+                if self.__generatesMovie:
                     self.__movie.AddAction(self.__env.now, 'DA',  self.__fillingOfDepot[0].level)
                 self.__rewward += 0.01 # We add a small reward for doing a first processing step.
             elif self.__workerAtOrGoingToStation[actorChosen] in [1,2]:
                 # The other two stations transfer 1 unit.
                 yield self.__fillingOfDepot[0].get(1) # Get 1 unit.
-                if self.__movie:
+                if self.__generatesMovie:
                     self.__movie.AddAction(self.__env.now, 'DA',  self.__fillingOfDepot[0].level)
                 yield self.__env.timeout(10.0) # Work for 10 seconds.
                 yield self.__fillingOfDepot[1].put(1) # Fills into the second depot.
-                if self.__movie:
+                if self.__generatesMovie:
                     self.__movie.AddAction(self.__env.now, 'DB',  self.__fillingOfDepot[1].level)
                 self.__rewward += 0.01 # Get a small reward.
             else: # This must be the last station (3)
                 assert self.__workerAtOrGoingToStation[actorChosen] == 3, "This should be station 3"
                 yield self.__fillingOfDepot[1].get(1) # Get 1 unit.
-                if self.__movie:
+                if self.__generatesMovie:
                     self.__movie.AddAction(self.__env.now, 'DB',  self.__fillingOfDepot[1].level)
                 yield self.__env.timeout(5.0) # We work 5 seconds 
                
@@ -191,7 +192,7 @@ class FactoryPlugin:
             currentStation = self.__workerAtOrGoingToStation[actorChosen]
             self.__workerAtOrGoingToStation[actorChosen] = destination
             time = FactoryPlugin.TransferTime[currentStation][destination]
-            if self.__movie:
+            if self.__generatesMovie:
                 self.__movie.AddAction(self.__env.now
                                       , actorCode, 
                                       {'State': 'Walking' , 

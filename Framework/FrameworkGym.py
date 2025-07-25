@@ -9,20 +9,17 @@ import gymnasium as gym
 import simpy
 from simpy.events import AnyOf
 
-from gymnasium.utils.env_checker import check_env
-
-import FactoryExample.FactoryPlugin as Example
 
 
 class FrameworkGym(gym.Env):
       
-    def __init__(self, generator=None, generateMovieScript=False, additionalOptions={}):
+    def __init__(self, generator, generateMovieScript=False, additionalOptions={}):
         '''
         Generates the gmy in OpenAI gym format.
 
         Parameters
         ----------
-        generator : TYPE, optional
+        generator : TYPE
             DESCRIPTION. The class name of the concrete implementation.
         generateMovieScript : TYPE, optional
             DESCRIPTION. Indicates if we want to generate a movie script, default is false
@@ -35,20 +32,14 @@ class FrameworkGym(gym.Env):
 
         '''
         
-        if generator:
-            self.__plugin = generator(generateMovieScript, **additionalOptions)
-      
-        else:
-            self.__plugin = Example.FactoryPlugin(generateMovieScript)
-      
+        self.__plugin = generator(generateMovieScript, **additionalOptions)
         self.__numActors =  len(  self.__plugin.ActionArray)
-        
         self.__generateMovieScript = generateMovieScript
         baseObservationSpace =  self.__plugin.GetObservationSpace()
         # We add the actor who is going to act next as observation.
         baseObservationSpace['Actor'] = gym.spaces.Discrete(self.__numActors)
         self.observation_space = gym.spaces.Dict(baseObservationSpace)
-        self.action_space = gym.spaces.Discrete(sum(  self.__plugin.ActionArray)) # 0: process player if possible, 1 : move to que 0, 2: move to que 1 3 mpove to que 2
+        self.action_space = gym.spaces.Discrete(sum(  self.__plugin.ActionArray)) 
       
         
 
@@ -73,8 +64,8 @@ class FrameworkGym(gym.Env):
         '''
         super().reset(seed=seed)
         self.__env = simpy.Environment()
-        self.__actors = list(range(self.__numActors))
-        self.__actorEvents = [None] * (self.__numActors + 1)
+        self.__actorsWaitingForCommand = list(range(self.__numActors))
+        self.__actorEvents = [None] * self.__numActors
         self.__plugin.reset(self.__env, super().np_random)
         return self.__get_obs(), {}
    
@@ -111,7 +102,7 @@ class FrameworkGym(gym.Env):
         '''
         observation = self.__plugin.GetObservation()       
         # In the case we have run into the timeout, we still need to flag an actor as part of the observation.
-        observation['Actor'] =  0 if not self.__actors else  self.__actors[0]
+        observation['Actor'] =  0 if not self.__actorsWaitingForCommand else  self.__actorsWaitingForCommand[0]
         return observation
     
     def step(self, action):
@@ -137,22 +128,22 @@ class FrameworkGym(gym.Env):
             Contains the movie script if required and if sepisode terminated,.
 
         '''
-        actorToChoose = self.__actors.pop(0)
-        locAction = self.__getLocalAction(action, actorToChoose)
-        # Because the process is just kicked off at the next rung, we have to eventually prepare actiion here 
-        # immediately to avoid ay conflicts in action asmking on other actors.
-        self.__plugin.PrepareAction(actorToChoose, locAction)
-        self.__actorEvents[actorToChoose] = self.__env.process(self.__plugin.PerformAction(actorToChoose, locAction))
+        currentActor = self.__actorsWaitingForCommand.pop(0)
+        actorSpecificAction = self.__getLocalAction(action, currentActor)
+        # Because the process is just kicked off at the next run, we have to eventually prepare action here 
+        # immediately to avoid ay conflicts in action masking on other actors.
+        self.__plugin.PrepareAction(currentActor, actorSpecificAction)
+        self.__actorEvents[currentActor] = self.__env.process(self.__plugin.PerformAction(currentActor, actorSpecificAction))
         wasTimeOut = False
         # Check if we have done all, if this is the case we have to run to get the next action.
-        if not self.__actors:
-            waitList =[self.__env.timeout(self.__plugin.TimeOut)]+[x for x in self.__actorEvents if x ]
-            fired = AnyOf(self.__env, waitList)
-            self.__env.run(fired)
-            wasTimeOut = waitList[0].processed
+        if not self.__actorsWaitingForCommand:
+            deadLockGuard = self.__env.timeout(self.__plugin.TimeOut)
+            waitList = (x for x in self.__actorEvents if x )
+            self.__env.run( deadLockGuard | AnyOf(self.__env, waitList))
+            wasTimeOut = deadLockGuard.processed
             for idx, event in enumerate(self.__actorEvents):
                 if event and event.processed:
-                    self.__actors.append(idx)
+                    self.__actorsWaitingForCommand.append(idx)
                     self.__actorEvents[idx] = None
                     
         reward = self.__plugin.TimeOutPenalty if wasTimeOut else self.__plugin.GetAndResetReward()
@@ -175,10 +166,10 @@ class FrameworkGym(gym.Env):
             Array with valid actions.
 
         '''
-        currentActor = self.__actors[0]
+        currentActor = self.__actorsWaitingForCommand[0]
         header = sum( self.__plugin.ActionArray[:currentActor])
         trailer = sum(  self.__plugin.ActionArray[currentActor + 1:])
-        localMask = self.__plugin.action_masks(self.__actors[0])
+        localMask = self.__plugin.action_masks(self.__actorsWaitingForCommand[0])
         res = [False] * header+ localMask + [False] * trailer
         return res
 
