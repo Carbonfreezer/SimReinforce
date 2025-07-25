@@ -9,7 +9,7 @@ Created on Thu Jul 24 15:19:33 2025
 import pickle as pk
 class ScriptGenerator:
     
-    def __init__(self, simpyEnv):
+    def __init__(self, simpyEnv = None):
         self.__env = simpyEnv
         '''The simpy environment to ask for the current time'''
         self.__logList = []
@@ -78,10 +78,11 @@ class ScriptGenerator:
         '''
         
         file = open(fileName, 'wb') 
-        pk.dump(self, file)
+        pk.dump(self.__logList, file)
         
+
     @staticmethod
-    def LoadScript(fileName):
+    def LoadScript( fileName):
         '''
         Loads a script from a filename.
 
@@ -90,14 +91,13 @@ class ScriptGenerator:
         fileName : TYPE
             File to load.
 
-        Returns
-        -------
-        TYPE
-            The loaded file
+     
 
         '''
         handle = open(fileName, 'rb')
-        return pk.load(handle)
+        script = ScriptGenerator()
+        script.__logList =  pk.load(handle)
+        return script
     
     def GetAllInterpolatedEntries(self, time):
         '''

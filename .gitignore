@@ -1,7 +1,8 @@
 # My log files
 *.pkl
 *.zip
-FactoryExample/eval_logs
+*.xcf
+*.mp4
 
 
 # Byte-compiled / optimized / DLL files
