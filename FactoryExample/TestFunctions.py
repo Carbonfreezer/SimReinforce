@@ -8,4 +8,5 @@ Created on Fri Jul 25 09:13:43 2025
 import FactoryPlugin
 import Framework.GlobalFunctions as Global
 
-Global.PerformTraining("MyBestModel", FactoryPlugin.FactoryPlugin)
+Global.PerformTraining("TestModel", FactoryPlugin.FactoryPlugin, macroBatches=10)
+#Global.GenerateScript("MyBestModel", "ScriptForModel",  FactoryPlugin.FactoryPlugin)

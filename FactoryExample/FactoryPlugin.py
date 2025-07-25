@@ -86,7 +86,7 @@ class FactoryPlugin:
         '''
         
         assert self.__generatesMovie, "We must be in movie generation mode."
-        self.__movie.CloseAllEntries(self.__env.now)
+        self.__movie.CloseAllEntries()
         return self.__movie
     
     
@@ -155,8 +155,7 @@ class FactoryPlugin:
         # In this case we are working
         if localAction == 0:
             if self.__generatesMovie:
-                self.__movie.AddAction(self.__env.now
-                                      , actorCode, 
+                self.__movie.AddAction(actorCode, 
                                       {'State': 'Working' , 
                                        'Station' : self.__workerAtOrGoingToStation[actorChosen]})
             self.__workerCurrentlyInTransfer[actorChosen] = False
@@ -165,23 +164,23 @@ class FactoryPlugin:
                 yield self.__env.timeout(5.0) # We work 5 seconds at station 0
                 yield self.__fillingOfDepot[0].put(1) # We fill in 1 unit in depot 1
                 if self.__generatesMovie:
-                    self.__movie.AddAction(self.__env.now, 'DA',  self.__fillingOfDepot[0].level)
+                    self.__movie.AddAction( 'DA',  self.__fillingOfDepot[0].level)
                 self.__rewward += 0.01 # We add a small reward for doing a first processing step.
             elif self.__workerAtOrGoingToStation[actorChosen] in [1,2]:
                 # The other two stations transfer 1 unit.
                 yield self.__fillingOfDepot[0].get(1) # Get 1 unit.
                 if self.__generatesMovie:
-                    self.__movie.AddAction(self.__env.now, 'DA',  self.__fillingOfDepot[0].level)
+                    self.__movie.AddAction( 'DA',  self.__fillingOfDepot[0].level)
                 yield self.__env.timeout(10.0) # Work for 10 seconds.
                 yield self.__fillingOfDepot[1].put(1) # Fills into the second depot.
                 if self.__generatesMovie:
-                    self.__movie.AddAction(self.__env.now, 'DB',  self.__fillingOfDepot[1].level)
+                    self.__movie.AddAction('DB',  self.__fillingOfDepot[1].level)
                 self.__rewward += 0.01 # Get a small reward.
             else: # This must be the last station (3)
                 assert self.__workerAtOrGoingToStation[actorChosen] == 3, "This should be station 3"
                 yield self.__fillingOfDepot[1].get(1) # Get 1 unit.
                 if self.__generatesMovie:
-                    self.__movie.AddAction(self.__env.now, 'DB',  self.__fillingOfDepot[1].level)
+                    self.__movie.AddAction('DB',  self.__fillingOfDepot[1].level)
                 yield self.__env.timeout(5.0) # We work 5 seconds 
                
                 self.__rewward += 0.98 # Get finsh reward.
@@ -193,8 +192,7 @@ class FactoryPlugin:
             self.__workerAtOrGoingToStation[actorChosen] = destination
             time = FactoryPlugin.TransferTime[currentStation][destination]
             if self.__generatesMovie:
-                self.__movie.AddAction(self.__env.now
-                                      , actorCode, 
+                self.__movie.AddAction( actorCode, 
                                       {'State': 'Walking' , 
                                        'Station' : currentStation,
                                        'Destination' : destination})
@@ -256,11 +254,11 @@ class FactoryPlugin:
         self.__env = simPyEnv
         
         if self.__generatesMovie:
-            self.__movie = Movie.ScriptGenerator()
-            self.__movie.AddAction(0, 'DA', 0)
-            self.__movie.AddAction(0, 'DB', 0)
-            self.__movie.AddAction(0, 'A0', {'State': 'Working' , 'Station' : 0})
-            self.__movie.AddAction(0, 'A1', {'State': 'Working' , 'Station' : 1})
+            self.__movie = Movie.ScriptGenerator(simPyEnv)
+            self.__movie.AddAction( 'DA', 0)
+            self.__movie.AddAction( 'DB', 0)
+            self.__movie.AddAction( 'A0', {'State': 'Working' , 'Station' : 0})
+            self.__movie.AddAction( 'A1', {'State': 'Working' , 'Station' : 1})
         
         
         

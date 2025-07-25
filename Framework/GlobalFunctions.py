@@ -15,6 +15,9 @@ from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 import Framework.FrameworkGym as Frame
 
 
+from sb3_contrib.common.maskable.utils import get_action_masks
+
+
 def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOargs={},
                     macroBatches = 5, sizeOfMacroBatch = 100_000, evaluationRuns = 1000):
     '''
@@ -54,3 +57,38 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
     
     model.learn(total_timesteps=macroBatches * sizeOfMacroBatch, callback=evalCallback)
 
+
+
+def GenerateScript(modelSaveName, scriptName,  generator, optionalArgs = {}):
+    '''
+    Generates a script that can be transformed into a movie later on.
+
+    Parameters
+    ----------
+    modelSaveName : TYPE
+        The save name of the model.
+    scriptName : TYPE
+        The savename of the script without extension.
+    generator : TYPE
+        The generator used in the gym.
+    optionalArgs : TYPE, optional
+        Optional arguments for the generator.. The default is {}.
+
+    Returns
+    -------
+    None.
+
+    '''
+    env = Frame.FrameworkGym(generator = generator, generateMovieScript=True, additionalOptions=optionalArgs)
+    model = MaskablePPO.load(modelSaveName,  env=env)
+
+    env = model.get_env()
+    obs = env.reset()
+    terminated = False
+    while not terminated:
+        action_masks = get_action_masks(env)
+        action, _state = model.predict(obs, deterministic=True, action_masks=action_masks)
+        obs, reward, terminated, info = env.step(action)
+     
+       
+    info[0]['Script'].SaveScript(scriptName+".pkl")    
