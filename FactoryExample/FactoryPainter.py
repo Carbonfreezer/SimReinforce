@@ -60,7 +60,7 @@ class FactoryPainter:
         
         self.__depotPaint = Discreet.DiscreetBar(10, 3, 150, 75, 'Grey', 'Blue', 1)
         self.__objectImage = pg.image.load("Product.png")
-        self.__timePaint = Continuos.ContinuousBar(10, 799, 118, 'Grey', 'Blue', 1)
+        self.__timePaint = Continuos.ContinuousBar(10, 799, 118, 'Grey', 'Blue', 3)
         
         self.__font = pg.font.SysFont(None, 48)
         
@@ -117,7 +117,7 @@ class FactoryPainter:
         img = self.__font.render(f"{numItems}", True, pg.Color(255,255,255))
         Pos.PositionManager.PaintSprite(surface, img, self.__pointCollection.GetPoint("ObjT"))
         time = situations['Time']['Factor']
-        self.__timePaint.paint(surface,  self.__pointCollection.GetPoint('Bar'),  time)
+        self.__timePaint.paint(surface,  self.__pointCollection.GetPoint('Bar'),  1.0 - time)
                
         
       
