@@ -65,7 +65,7 @@ class FrameworkGym(gym.Env):
         super().reset(seed=seed)
         self.__env = simpy.Environment()
         self.__actorsWaitingForCommand = list(range(self.__numActors))
-        self.__actorEvents = [None] * self.__numActors
+        self.__actorEvents = []
         self.__plugin.reset(self.__env, super().np_random)
         return self.__get_obs(), {}
    
@@ -133,18 +133,18 @@ class FrameworkGym(gym.Env):
         # Because the process is just kicked off at the next run, we have to eventually prepare action here 
         # immediately to avoid ay conflicts in action masking on other actors.
         self.__plugin.PrepareAction(currentActor, actorSpecificAction)
-        self.__actorEvents[currentActor] = self.__env.process(self.__plugin.PerformAction(currentActor, actorSpecificAction))
+        newEvent = self.__env.process(self.__plugin.PerformAction(currentActor, actorSpecificAction))
+        newEvent.associatedActor = currentActor
+        self.__actorEvents.append(newEvent)
         wasTimeOut = False
         # Check if we have done all, if this is the case we have to run to get the next action.
         if not self.__actorsWaitingForCommand:
             deadLockGuard = self.__env.timeout(self.__plugin.TimeOut)
-            waitList = (x for x in self.__actorEvents if x )
-            self.__env.run( deadLockGuard | AnyOf(self.__env, waitList))
+            self.__env.run( deadLockGuard | AnyOf(self.__env, self.__actorEvents))
             wasTimeOut = deadLockGuard.processed
-            for idx, event in enumerate(self.__actorEvents):
-                if event and event.processed:
-                    self.__actorsWaitingForCommand.append(idx)
-                    self.__actorEvents[idx] = None
+            self.__actorsWaitingForCommand = [event.associatedActor for event in self.__actorEvents if event.processed]
+            self.__actorEvents = [event for event in self.__actorEvents if not event.processed]
+          
                     
         reward = self.__plugin.TimeOutPenalty if wasTimeOut else self.__plugin.GetAndResetReward()
         observation = self.__get_obs()
