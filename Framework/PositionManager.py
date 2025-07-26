@@ -8,7 +8,7 @@ Created on Fri Jul 25 11:19:38 2025
 import pygame as pg
 import numpy as np
 
-class PositionExtractor:
+class PositionManager:
     def __init__(self, pointDictionary):
         
         

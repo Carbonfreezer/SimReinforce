@@ -6,8 +6,9 @@ Created on Fri Jul 25 12:31:33 2025
 """
 
 import pygame as pg
-import Framework.PositionExtractor as Pos
-import Framework.DiscreetBar as ProgPaint
+import Framework.PositionManager as Pos
+import Framework.DiscreetBar as Discreet
+import Framework.ContinuousBar as Continuos
 
 class FactoryPainter:
     
@@ -22,9 +23,11 @@ class FactoryPainter:
                         'Stat2' : [513,378],
                         'Stat3' : [823, 217],
                         'LeftP' : [201,522],
-                        'RightP' : [823,522]
+                        'RightP' : [823,522],
+                        'ObjT' : [935, 725],
+                        'Bar' : [412,692]
                             }
-        self.__pointCollection = Pos.PositionExtractor(positionDict)
+        self.__pointCollection = Pos.PositionManager(positionDict)
         
         
     
@@ -43,12 +46,23 @@ class FactoryPainter:
                              (3,1) : pFunc(['Stat3','Stat1']),
                              (3,2) : pFunc(['Stat3','Stat2'])
                            }
+        
+        self.__objectPathes = [pFunc(['Entrance', 'Stat0', 'DepotA']),
+                               pFunc(['DepotA', 'Stat1', 'DepotB']),
+                               pFunc(['DepotA', 'Stat2', 'DepotB']),
+                               pFunc(['DepotB','Stat3', 'Exit'])]
+            
                              
                              
         self.__working = [pg.image.load("Working1.png"), pg.image.load("Working2.png")] 
         self.__travelling = [pg.image.load("Travelling1.png"), pg.image.load("Travelling2.png")]
+        self.__stalled = [pg.image.load("Stalled1.png"), pg.image.load("Stalled2.png")]
         
-        self.__depotPaint = ProgPaint.DiscreetBar(10, 3, 150, 75, 'Grey', 'Blue', 1)
+        self.__depotPaint = Discreet.DiscreetBar(10, 3, 150, 75, 'Grey', 'Blue', 1)
+        self.__objectImage = pg.image.load("Product.png")
+        self.__timePaint = Continuos.ContinuousBar(10, 799, 118, 'Grey', 'Blue', 1)
+        
+        self.__font = pg.font.SysFont(None, 48)
         
                                                  
         
@@ -79,17 +93,31 @@ class FactoryPainter:
             actorInfo = situations[f"A{act}"]["Info"]
             actorInterpol = situations[f"A{act}"]["Factor"]
             
-            isWorking = actorInfo['State'] == 'Working'
-            if isWorking:
+            if actorInfo['State'] == 'Working':
                 drawingPoint = self.__pointCollection.GetPoint(f"Stat{actorInfo['Station']}")
                 drawingSprite = self.__working[act]
-                Pos.PositionExtractor.PaintSprite(surface, drawingSprite, drawingPoint)
+                Pos.PositionManager.PaintSprite(surface, drawingSprite, drawingPoint)
+                # Now we draw the parcel.
+                drawingPoint = Pos.PositionManager.GetInterpolatedPosition(self.__objectPathes[actorInfo['Station']], actorInterpol)
+                Pos.PositionManager.PaintSprite(surface, self.__objectImage, drawingPoint)
+            elif actorInfo['State'] == 'Stalled':
+                drawingPoint = self.__pointCollection.GetPoint(f"Stat{actorInfo['Station']}")
+                drawingSprite = self.__stalled[act]
+                Pos.PositionManager.PaintSprite(surface, drawingSprite, drawingPoint)
             else:
                travelPath = self.__workerPathes[(actorInfo['Station'], 
                                                  actorInfo['Destination'])]
-               drawingPoint = Pos.PositionExtractor.GetInterpolatedPosition(travelPath, actorInterpol)
+               drawingPoint = Pos.PositionManager.GetInterpolatedPosition(travelPath, actorInterpol)
                drawingSprite = self.__travelling[act]
-               Pos.PositionExtractor.PaintSprite(surface, drawingSprite, drawingPoint)
+               Pos.PositionManager.PaintSprite(surface, drawingSprite, drawingPoint)
+               
+               
+        # The bottom bar
+        numItems = situations['Objs']['Info']
+        img = self.__font.render(f"{numItems}", True, pg.Color(255,255,255))
+        Pos.PositionManager.PaintSprite(surface, img, self.__pointCollection.GetPoint("ObjT"))
+        time = situations['Time']['Factor']
+        self.__timePaint.paint(surface,  self.__pointCollection.GetPoint('Bar'),  time)
                
         
       
