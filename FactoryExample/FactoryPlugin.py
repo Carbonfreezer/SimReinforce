@@ -8,10 +8,12 @@ Created on Wed Jul 23 14:08:55 2025
 import gymnasium as gym
 import simpy
 import Framework.ScriptGenerator as Movie
+import numpy as np
 
 class FactoryPlugin:
     
     MaxFillingInStation = 10
+    MaxTime = 300
     
     TransferTime = [[0.0, 4.0, 4.0, 8.0], 
                     [4.0, 0.0, 1.0, 4.0], 
@@ -44,7 +46,7 @@ class FactoryPlugin:
     
     @property
     def Terminated(self):
-        return self.__env.now > 1000 # We termiate after 1000
+        return self.__env.now > FactoryPlugin.MaxTime # We termiate after 1000
     
     @property
     def TimeOut(self):
@@ -103,7 +105,8 @@ class FactoryPlugin:
                 'Filling B': gym.spaces.Discrete(FactoryPlugin.MaxFillingInStation + 1),
                 # 4: Beeing at station 1,2,3,4 4: Transition to station 1,2,3,4
                 'Worker 1' : gym.spaces.Discrete(8),
-                'Worker 2' : gym.spaces.Discrete(8)
+                'Worker 2' : gym.spaces.Discrete(8),
+                'Time' : gym.spaces.Box(0.0, 1.0, shape=(1,), dtype=np.float32)
                 }
     
     
@@ -314,10 +317,12 @@ class FactoryPlugin:
             Observation dictionary.
 
         '''
+       
         return {'Filling A' : self.__fillingOfDepot[0].level,
                 'Filling B' : self.__fillingOfDepot[1].level,
                 'Worker 1': self.__workerAtOrGoingToStation[0] + 
                     (4 if self.__workerCurrentlyInTransfer[0] else 0),
                 'Worker 2' :   self.__workerAtOrGoingToStation[1] + 
-                    (4 if self.__workerCurrentlyInTransfer[1] else 0)   
+                    (4 if self.__workerCurrentlyInTransfer[1] else 0)  ,
+                'Time' : [np.clip(self.__env.now / FactoryPlugin.MaxTime, 0.0, 1.0)]
                     }

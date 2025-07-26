@@ -61,8 +61,10 @@ class ScriptGenerator:
 
 
         '''
+        
+        # We add some small time to get the eventual last state change in.
         for entry in self.__openEntries.values():
-            entry['End'] =  self.__env.now
+            entry['End'] =  self.__env.now + 1
         self.__openEntries = {}
         return self.__logList
         

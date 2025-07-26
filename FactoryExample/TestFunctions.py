@@ -10,10 +10,10 @@ import Framework.GlobalFunctions as Global
 
 import FactoryExample.FactoryPainter as Painter
 
-#Global.PerformTraining("MyBestModel", FactoryPlugin.FactoryPlugin)
+# Global.PerformTraining("MyBestModel", FactoryPlugin.FactoryPlugin,sizeOfMacroBatch=20_000, evaluationRuns=1, macroBatches=30)
 
-#Global.GenerateScript("MyBestModel", "ScriptForModel",  FactoryPlugin.FactoryPlugin)
+Global.GenerateScript("MyBestModel", "ScriptForModel",  FactoryPlugin.FactoryPlugin)
 
 
-Global.GenerateMovieFromScript("ScriptForModel", "Process", Painter.FactoryPainter, 30, 10.0)
+Global.GenerateMovieFromScript("ScriptForModel", "Process", Painter.FactoryPainter, 30, 5.0)
 
