@@ -29,10 +29,8 @@ class MovieMaker:
         
         # Ask our script.
         situation = self.__script.GetAllInterpolatedEntries(simulationTime)
+        self.__painter.DrawElements(self.__drawingSurface, situation)
         
-        for actor, entry in situation.items():
-            self.__painter.DrawElement(self.__drawingSurface, actor, entry['Factor'], entry['Info'])
-          
             
         self.__painter.DrawFinalOverlay(self.__drawingSurface)  
         # Convert to numpy array

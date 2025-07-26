@@ -7,42 +7,48 @@ Created on Fri Jul 25 12:31:33 2025
 
 import pygame as pg
 import Framework.PositionExtractor as Pos
-import Framework.ProgressBarPainter as ProgPaint
+import Framework.DiscreetBar as ProgPaint
 
 class FactoryPainter:
     
     def __init__(self):
         self.__backGround = pg.image.load("Background.png")
-        self.__pointCollection = Pos.PositionExtractor([[527,115], 
-                                                        [184, 307],
-                                                        [883, 313],
-                                                        [516, 486],
-                                                        [192,594], # Side walking point A
-                                                        [888, 601], # Side walking point B
-                                                        [422,300], # First depot element
-                                                        [601, 300] # Second depot element
-                                                        ])
+        positionDict = {'Entrance' : [40,218],
+                        'Exit':[1024-40,218],
+                        'DepotA':[398.5, 218],
+                        'DepotB': [618.5,218],
+                        'Stat0' : [201,218],
+                        'Stat1' : [513,73],
+                        'Stat2' : [513,378],
+                        'Stat3' : [823, 217],
+                        'LeftP' : [201,522],
+                        'RightP' : [823,522]
+                            }
+        self.__pointCollection = Pos.PositionExtractor(positionDict)
+        
+        
     
         
-        self.__workerPositionCoordinates = [1, 0, 3, 2]
-        self.__workerPathes={(0,1) : self.__pointCollection.GetPath([1,0]),
-                             (0,2) : self.__pointCollection.GetPath([1,3]),
-                             (0,3) : self.__pointCollection.GetPath([1,4,5,2]),
-                             (1,0) : self.__pointCollection.GetPath([0,1]),
-                             (1,2) : self.__pointCollection.GetPath([0,3]),
-                             (1,3) : self.__pointCollection.GetPath([0,2]),
-                             (2,0) : self.__pointCollection.GetPath([3,1]),
-                             (2,1) : self.__pointCollection.GetPath([3,0]),
-                             (2,3) : self.__pointCollection.GetPath([3,2]),
-                             (3,0) : self.__pointCollection.GetPath([2,5,4,1]),
-                             (3,1) : self.__pointCollection.GetPath([2,0]),
-                             (3,2) : self.__pointCollection.GetPath([3,1])}
+        pFunc = self.__pointCollection.GetPath
+        self.__workerPathes={(0,1) : pFunc(['Stat0','Stat1']),
+                             (0,2) : pFunc(['Stat0','Stat2']),
+                             (0,3) : pFunc(['Stat0','LeftP','RightP','Stat3']),
+                             (1,0) : pFunc(['Stat1','Stat0']),
+                             (1,2) : pFunc(['Stat1','Stat2']),
+                             (1,3) : pFunc(['Stat1','Stat3']),
+                             (2,0) : pFunc(['Stat2','Stat0']),
+                             (2,1) : pFunc(['Stat2','Stat1']),
+                             (2,3) : pFunc(['Stat2','Stat3']),
+                             (3,0) : pFunc(['Stat3','RightP', 'LeftP','Stat0']),
+                             (3,1) : pFunc(['Stat3','Stat1']),
+                             (3,2) : pFunc(['Stat3','Stat2'])
+                           }
                              
                              
         self.__working = [pg.image.load("Working1.png"), pg.image.load("Working2.png")] 
         self.__travelling = [pg.image.load("Travelling1.png"), pg.image.load("Travelling2.png")]
         
-        self.__depotPaint = ProgPaint.ProgressBarPainter(10, 3, 80, 160, 'Grey', 'Blue')
+        self.__depotPaint = ProgPaint.DiscreetBar(10, 3, 150, 75, 'Grey', 'Blue', 1)
         
                                                  
         
@@ -61,44 +67,30 @@ class FactoryPainter:
         pass
         
         
-    def DrawElement(self, surface, actor, interpolationTime, interpolationInformation):
-        '''
-        Draws a time dependend element into the surface
-
-        Parameters
-        ----------
-        surface : TYPE
-            Destination surface to render to.
-        actor : TYPE
-            The actor we want to render.
-        interpolationTime : TYPE
-            The transition state (0..1) the actor is in.
-        interpolationInformation : TYPE
-            Specific information added to generate the image.
-
-        Returns
-        -------
-        None.
-
-        '''
+    def DrawElements(self, surface,  situations):
+        # First we draw the depots,
+        filling = situations['DA']['Info']
+        self.__depotPaint.paint(surface,  self.__pointCollection.GetPoint('DepotA'),  filling)
+        filling = situations['DB']['Info']
+        self.__depotPaint.paint(surface,  self.__pointCollection.GetPoint('DepotB'),  filling)
         
-        if actor in ['A0', 'A1']:
-            index = 0 if actor=='A0' else 1
-            isWorking = interpolationInformation['State'] == 'Working'
+        # Now come the actors
+        for act in range(2):
+            actorInfo = situations[f"A{act}"]["Info"]
+            actorInterpol = situations[f"A{act}"]["Factor"]
+            
+            isWorking = actorInfo['State'] == 'Working'
             if isWorking:
-                drawingPoint = self.__pointCollection.GetPoint(
-                    self.__workerPositionCoordinates[interpolationInformation['Station']])
-                drawingSprite = self.__working[index]
+                drawingPoint = self.__pointCollection.GetPoint(f"Stat{actorInfo['Station']}")
+                drawingSprite = self.__working[act]
                 Pos.PositionExtractor.PaintSprite(surface, drawingSprite, drawingPoint)
             else:
-               travelPath = self.__workerPathes[(interpolationInformation['Station'], 
-                                                 interpolationInformation['Destination'])]
-               drawingPoint = Pos.PositionExtractor.GetInterpolatedPosition(travelPath, interpolationTime)
-               drawingSprite = self.__travelling[index]
+               travelPath = self.__workerPathes[(actorInfo['Station'], 
+                                                 actorInfo['Destination'])]
+               drawingPoint = Pos.PositionExtractor.GetInterpolatedPosition(travelPath, actorInterpol)
+               drawingSprite = self.__travelling[act]
                Pos.PositionExtractor.PaintSprite(surface, drawingSprite, drawingPoint)
                
-        elif actor == 'DA':
-           self.__depotPaint.paint(surface,  self.__pointCollection.GetPoint(6), 180, interpolationInformation)
-        else:
-           self.__depotPaint.paint(surface, self.__pointCollection.GetPoint(7), 180, interpolationInformation) 
+        
+      
     

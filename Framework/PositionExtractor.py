@@ -9,23 +9,28 @@ import pygame as pg
 import numpy as np
 
 class PositionExtractor:
-    def __init__(self, pointList):
-        self.__font = pg.font.SysFont(None, 48)
-        self.__pointList = np.array( pointList )
+    def __init__(self, pointDictionary):
+        
+        
+        self.__font = pg.font.SysFont(None, 32)
+        self.__pointDictionary = {}
+        for key,value in pointDictionary.items():
+            self.__pointDictionary[key] = np.array(value)
+        
         
         
     def DebugDraw(self, targetSurface):
-        for idx, point in enumerate(self.__pointList):
+        for idx, point in enumerate(self.__pointDictionary):
             img = self.__font.render(f"{idx}", True, pg.Color(255,255,255))
             self.PaintSprite(targetSurface, img, point)
             
     
     @property
     def NumOfPoints(self):
-        return np.shape(self.__pointList)[0]
+        return np.shape(self.__pointDictionary)[0]
     
     def GetPoint(self, index):
-        return self.__pointList[index]
+        return self.__pointDictionary[index]
     
     
     @staticmethod
@@ -38,8 +43,8 @@ class PositionExtractor:
         result = []
         totalLength = 0.0
         for i in range(len(listOfPoints)-1):
-            start = self.__pointList[listOfPoints[i]]
-            end = self.__pointList[listOfPoints[i + 1]]
+            start = self.__pointDictionary[listOfPoints[i]]
+            end = self.__pointDictionary[listOfPoints[i + 1]]
             length = np.linalg.norm(end - start)
             totalLength += length
             entry = {'Start' : start, 'End' : end, 'Length' : length}
