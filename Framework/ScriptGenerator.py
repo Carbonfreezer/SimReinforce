@@ -17,18 +17,6 @@ class ScriptGenerator:
         self.__openEntries = {}
         '''The dictionary that contains the association between actor and the opened entry'''
 
-    @property         
-    def LogList(self):
-        '''
-        Asks for the log list, to avoid scrambling the pickle system
-
-        Returns
-        -------
-        TYPE
-            The loglist.
-
-        '''
-        return self.__logList
     
     @staticmethod    
     def __makeLogEntry(startTime, actor, stateInformation):
@@ -60,19 +48,23 @@ class ScriptGenerator:
         self.__openEntries[actor] = newLog
         
         
-    def CloseAllEntries(self):
+    def CloseAllEntriesAndGetLogList(self):
         '''
         Closes all entries from all actors. Usually done at the end of the simuation.
+        Returns the loglist.
 
      
         Returns
         -------
-        None.
+        TYPE
+            The loglist.
+
 
         '''
         for entry in self.__openEntries.values():
             entry['End'] =  self.__env.now
         self.__openEntries = {}
+        return self.__logList
         
 
     @staticmethod

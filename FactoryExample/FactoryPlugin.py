@@ -71,7 +71,7 @@ class FactoryPlugin:
             penalty for dedalock.
 
         '''
-        return -200.0
+        return -10.0
     
     @property 
     def MovieScript(self):
@@ -86,7 +86,6 @@ class FactoryPlugin:
         '''
         
         assert self.__generatesMovie, "We must be in movie generation mode."
-        self.__movie.CloseAllEntries()
         return self.__movie
     
     
