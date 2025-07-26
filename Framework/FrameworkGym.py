@@ -151,7 +151,7 @@ class FrameworkGym(gym.Env):
         isTerminated = self.__plugin.Terminated or wasTimeOut
         infoDir = {}
         if isTerminated and self.__generateMovieScript:
-            infoDir['Script'] = self.__plugin.MovieScript
+            infoDir['Script'] = self.__plugin.MovieScript.LogList
         return observation, reward, isTerminated, False, infoDir
 
             

@@ -15,6 +15,8 @@ from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 import Framework.FrameworkGym as Frame
 import Framework.MovieMaker as Movie
 
+import pickle as pk
+
 
 
 from sb3_contrib.common.maskable.utils import get_action_masks
@@ -91,9 +93,10 @@ def GenerateScript(modelSaveName, scriptName,  generator, optionalArgs = {}):
         action_masks = get_action_masks(env)
         action, _state = model.predict(obs, deterministic=True, action_masks=action_masks)
         obs, reward, terminated, info = env.step(action)
+    
      
-       
-    info[0]['Script'].SaveScript(scriptName+".pkl")    
+    file = open(scriptName + ".pkl", 'wb') 
+    pk.dump(info[0]['Script'], file)
     
 def GenerateMovieFromScript(scriptFilename, movieFilename, painterGenerator, fps, timeScale):
     '''
