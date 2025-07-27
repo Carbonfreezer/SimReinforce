@@ -10,6 +10,7 @@ import pygame as pg
 import Framework.ScriptGenerator as ScriptGenerator
 
 import moviepy.video.VideoClip as Video
+import moviepy.video.compositing as comp
 
 class MovieMaker:
     def __init__(self, painterGenerator):
@@ -19,14 +20,18 @@ class MovieMaker:
         
         
     def __makeFrame(self, time):
+        return self.__createImageFromData(self.__script.GetAllInterpolatedEntries(time))
+      
+    
+    def __createImageFromData(self, data):
         self.__painter.DrawStaticParts(self.__drawingSurface)
         self.__painter.DrawElements(self.__drawingSurface,
-                                    self.__script.GetAllInterpolatedEntries(time))
+                                    data)
         self.__painter.DrawFinalOverlay(self.__drawingSurface)  
         # Convert to numpy array
         array = pg.surfarray.array3d(self.__drawingSurface)
         array = array.swapaxes(0, 1)
-        return array     
+        return array   
     
     
    
@@ -39,6 +44,10 @@ class MovieMaker:
         deltaTime = timeScale / fps
         amounOfFrames = int(self.__script.MaxTime / deltaTime)
         dataList = [frame * deltaTime for frame in range(amounOfFrames)]
-        clip = Video.DataVideoClip(dataList, self.__makeFrame, fps)
+        movie = Video.DataVideoClip(dataList, self.__makeFrame, fps)
+        # Now we add header and trailer
+        header = Video.ImageClip(self.__makeFrame(0.0), duration=1.0)
+        trailer = Video.ImageClip(self.__createImageFromData(self.__script.GetLastState()), duration=1.0) 
+        clip = comp.CompositeVideoClip.concatenate_videoclips([header, movie, trailer])
         clip.write_videofile(movieFilename + ".mp4", codec='libx264')
         

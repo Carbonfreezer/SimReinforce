@@ -53,7 +53,11 @@ class PositionManager:
 
     @staticmethod
     def GetInterpolatedPosition(path, interPol):
+        
         remaining, segments = path
+        # Edge case we may get for final image generation.
+        if interPol == 1.0:
+            return segments[-1]['End']
         remaining *= interPol
         scanning = 0
         while remaining - segments[scanning]['Length'] > 0.0:

@@ -62,9 +62,8 @@ class ScriptGenerator:
 
         '''
         
-        # We add some small time to get the eventual last state change in.
         for entry in self.__openEntries.values():
-            entry['End'] =  self.__env.now + 1
+            entry['End'] =  self.__env.now
         self.__openEntries = {}
         return self.__logList
         
@@ -111,6 +110,21 @@ class ScriptGenerator:
                                        'Info' : entry['Info']}
             
         return result
+    
+    
+    def GetLastState(self):
+        endTime = self.MaxTime
+        filteredEntries = (x for x in self.__logList if x['End'] == endTime)
+        result = {}
+        for entry in filteredEntries:
+            result[entry['Actor']] =  {'Factor' : 1.0, 
+                                       'Info' : entry['Info']}
+            
+        return result
+        
+    
+    
+    
     
     @property
     def MaxTime(self):
