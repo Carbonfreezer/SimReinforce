@@ -95,7 +95,7 @@ class FactoryPlugin:
             penalty for dedalock.
 
         '''
-        return -1.0
+        return -10.0
     
     @property 
     def MovieScript(self):
