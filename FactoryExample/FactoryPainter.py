@@ -64,6 +64,8 @@ class FactoryPainter:
         
         self.__font = pg.font.SysFont(None, 48)
         
+        self.__foreGround = pg.image.load("Foreground.png")
+        
                                                  
         
     
@@ -71,17 +73,11 @@ class FactoryPainter:
     def ImageSize(self):
         rect = self.__backGround.get_rect()
         return (rect.width, rect.height)
-    
-    def DrawStaticParts(self, surface):
+        
+        
+    def DrawScene(self, surface,  situations):
+        # First background
         surface.blit(self.__backGround, (0,0))
-        
-        
-    def DrawFinalOverlay(self, surface):
-        # self.__pointCollection.DebugDraw(surface)
-        pass
-        
-        
-    def DrawElements(self, surface,  situations):
         # First we draw the depots,
         filling = situations['DA']['Info']
         self.__depotPaint.paint(surface,  self.__pointCollection.GetPoint('DepotA'),  filling)
@@ -118,6 +114,11 @@ class FactoryPainter:
         Pos.PositionManager.PaintSprite(surface, img, self.__pointCollection.GetPoint("ObjT"))
         time = situations['Time']['Factor']
         self.__timePaint.paint(surface,  self.__pointCollection.GetPoint('Bar'),  1.0 - time)
+        
+        # Final overlay
+        surface.blit(self.__foreGround, (0,0))
+        #self.__pointCollection.DebugDraw(surface)
+       
                
         
       

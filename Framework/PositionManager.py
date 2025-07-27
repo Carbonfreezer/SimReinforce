@@ -20,7 +20,7 @@ class PositionManager:
         
         
     def DebugDraw(self, targetSurface):
-        for idx, point in enumerate(self.__pointDictionary):
+        for idx, point in self.__pointDictionary.items():
             img = self.__font.render(f"{idx}", True, pg.Color(255,255,255))
             self.PaintSprite(targetSurface, img, point)
             

@@ -24,18 +24,12 @@ class MovieMaker:
       
     
     def __createImageFromData(self, data):
-        self.__painter.DrawStaticParts(self.__drawingSurface)
-        self.__painter.DrawElements(self.__drawingSurface,
-                                    data)
-        self.__painter.DrawFinalOverlay(self.__drawingSurface)  
+        self.__painter.DrawScene(self.__drawingSurface, data)
         # Convert to numpy array
         array = pg.surfarray.array3d(self.__drawingSurface)
         array = array.swapaxes(0, 1)
         return array   
     
-    
-   
-        
         
     def MakeMovie(self, movieFilename, scriptFilename, fps, timeScale):
         self.__script = ScriptGenerator.ScriptGenerator.LoadScript(scriptFilename+'.pkl')
