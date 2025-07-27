@@ -1,5 +1,5 @@
 # SimReinforce
-This is a framework for integrating Simpy, StableBaselines, and GamePy for Multi-Actor Situations.
+This framework integrates Simpy, StableBaselines, and GamePy to render a time-continuous movie using MoviePy for multi-actor situations.
 
 
 ## Example 
@@ -35,13 +35,21 @@ This core concept is reflected in the **step** function of **FrameworkGym**.
 
 As a next step, we want to generate a Video from the simulation. The OpenAI gym already provides this option. Unfortunately, this generates a movie frame after every step call. As we have coupled the Gym with a discrete event simulator in simpy
 The time passed in different calls of the step function may vary significantly. Additionally, for certain aspects, such as moving objects, we want to provide an interpolated transition between states. The way we solved this problem is to generate a log during a trial run, 
-which logs which object caused which event and when. This log is administered in the class **ScriptGenerator** of the framework. Whenever an actor makes a new decision, the old one gets flagged as finished and a new one starts. This way, continuous transitions can be displayed in
+which logs which object caused which event and when. This log is administered in the class **ScriptGenerator** of the framework. Whenever an actor makes a new decision, the old one is flagged as finished, and a new one begins. This way, continuous transitions can be displayed in
 the visualization. This could be done, for instance, if the event involves walking from A to B. The framework's user must implement this logging and is not limited to actors controlled by the AI. 
 
 If a script is provided, world situations can be generated for specific points in time. The **MovieMaker** class extracts this information and calls a render plugin to create an image based on the given information. As the framework will most likely be used
 for situations where things move around and objects get stored, several helper classes are provided for these tasks. First, there are two types of bar visualizations (**ContinuousBar** and **DiscreteBar**), and second, there is a helper class (**PositionManager**) that helps with painting
 sprites at specific positions on the screen. Positions can be handed over with names and paths, as a connection of points can be specified. Paths are  a means to help with positional animation. Given a completion percentage, a position can be extracted along the path.
 
-The main functions are in **GlobalFunctions**. This is one function to train the MaskabePPO learner (**PerformTraining**) and one function to execute an episode, log it, and generate a video (**GenerateMovie**).
+The main functions are in **GlobalFunctions**. There are two functions: one to train the MaskabePPO learner (**PerformTraining**) and another to execute an episode, log it, and generate a video (**GenerateMovie**).
+
+## Getting Started
+The best way to get started is to look at the Python files in the **FactoryExample** folder. The file **TestFunctions** serves as the main entry point. The **FactoryPlugin** file is the plugin for the OpenGym environment, responsible for the simulation. The file **FactoryPainter** 
+ is the plugin that is responsible for rendering a specific situation. If you want to program your application, create a new subfolder and implement these classes as well. Take a look at the public properties and methods. You also need to implement them. The link between the simulation and the rendering is the log
+ for the script generator. The best approach is to consider the changes in your simulation. These things become specific to a particular actor and are defined in the reset function of your plugin. Whenever these objects change, you can log the required information with the **AddAction** command. How these objects get visualized later on is handled in the painter module. 
+
+If you are used to OpenAI gyms, what may be a bit confusing here is that the system controls several actors. What corresponds to the step function is the combination of **PrepareAction** and **PerformAction**.  These functions are actor-specific. PerformAction is the actual process. Several processes may run concurrently. If you want to make sure, two actions do not collide, like two persons walking to the same position, you have to do this in the PerformAction method. Also, as several things may happen at the same time, the reward for several actions may be accumulated, as you can also see in the example. They get retrieved and reset by the **GetAndResetReward** function.
+Action masking is also done actor-specific by the **actions_masks** function.
 
 
