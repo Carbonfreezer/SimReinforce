@@ -1,7 +1,7 @@
 # My log files
-*.pkl
-*.zip
-*.mp4
+FactoryExample/*.pkl
+FactoryExample/*.zip
+FactoryExample/*.mp4
 
 
 # Byte-compiled / optimized / DLL files
