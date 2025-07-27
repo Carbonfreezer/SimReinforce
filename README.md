@@ -34,7 +34,14 @@ Once there are no more waiting actors, the simpy environment is run until at lea
 This core concept is reflected in the **step** function of **FrameworkGym**.
 
 As a next step, we want to generate a Video from the simulation. The OpenAI gym already provides this option. Unfortunately, this generates a movie frame after every step call. As we have coupled the Gym with a discrete event simulator in simpy
-The time passed in different calls of the step function may vary significantly. Also, for certain aspects like moving objects, we want to provide an interpolated transition between states. The way we solved this problem is to generate a log during a trial run, 
-which logs which object caused which event and when. This log is administered in the class **ScriptGenerator** of the framework. 
+The time passed in different calls of the step function may vary significantly. Additionally, for certain aspects, such as moving objects, we want to provide an interpolated transition between states. The way we solved this problem is to generate a log during a trial run, 
+which logs which object caused which event and when. This log is administered in the class **ScriptGenerator** of the framework. Whenever an actor makes a new decision, the old one gets flagged as finished and a new one starts. This way, continuous transitions can be displayed in
+the visualization. This could be done, for instance, if the event involves walking from A to B. The framework's user must implement this logging and is not limited to actors controlled by the AI. 
+
+If a script is provided, world situations can be generated for specific points in time. The **MovieMaker** class extracts this information and calls a render plugin to create an image based on the given information. As the framework will most likely be used
+for situations where things move around and objects get stored, several helper classes are provided for these tasks. First, there are two types of bar visualizations (**ContinuousBar** and **DiscreteBar**), and second, there is a helper class (**PositionManager**) that helps with painting
+sprites at specific positions on the screen. Positions can be handed over with names and paths, as a connection of points can be specified. Paths are  a means to help with positional animation. Given a completion percentage, a position can be extracted along the path.
+
+The main functions are in **GlobalFunctions**. This is one function to train the MaskabePPO learner (**PerformTraining**) and one function to execute an episode, log it, and generate a video (**GenerateMovie**).
 
 
