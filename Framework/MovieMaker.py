@@ -31,8 +31,8 @@ class MovieMaker:
         return array   
     
         
-    def MakeMovie(self, movieFilename, scriptFilename, fps, timeScale):
-        self.__script = ScriptGenerator.ScriptGenerator.LoadScript(scriptFilename+'.pkl')
+    def MakeMovie(self, movieFilename, logList, fps, timeScale):
+        self.__script = ScriptGenerator.ScriptGenerator(logList=logList)
         self.__timeScale = timeScale
         self.__drawingSurface = pg.Surface(self.__painter.ImageSize)
         deltaTime = timeScale / fps

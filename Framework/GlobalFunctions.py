@@ -11,18 +11,16 @@ from sb3_contrib import MaskablePPO
 import Framework.CustomEvalCallback as Custom
 from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 
-
 import Framework.FrameworkGym as Frame
 import Framework.MovieMaker as Movie
-
-import pickle as pk
 
 
 
 from sb3_contrib.common.maskable.utils import get_action_masks
+from stable_baselines3.common.env_util import make_vec_env
 
 
-def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOargs={},
+def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOargs={}, numOfParallelEnvs = 1,
                     macroBatches = 5, sizeOfMacroBatch = 100_000, evaluationRuns = 1000):
     '''
     Performs a training of the Maskakble PPO model.
@@ -50,41 +48,30 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
 
     '''
     
-    env = Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs)
+    
+    if numOfParallelEnvs == 1:
+        env = Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs)
+    else:
+        env = make_vec_env(lambda : Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs), 
+                           n_envs= numOfParallelEnvs)
+        
+    test_env = Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs)  
+    
     model = MaskablePPO("MultiInputPolicy", env, **additionalPPOargs)
     
    
-    evalCallback = MaskableEvalCallback( eval_env=env, 
+    evalCallback = MaskableEvalCallback( eval_env=test_env, 
                                         callback_on_new_best = Custom.CustomEvalCallback(modelSaveName),
-                                        eval_freq=sizeOfMacroBatch,
+                                        eval_freq=sizeOfMacroBatch / numOfParallelEnvs,
                                         n_eval_episodes=evaluationRuns)
     
     model.learn(total_timesteps=macroBatches * sizeOfMacroBatch, callback=evalCallback)
 
 
 
-def GenerateScript(modelSaveName, scriptName,  generator, optionalArgs = {}):
-    '''
-    Generates a script that can be transformed into a movie later on.
-
-    Parameters
-    ----------
-    modelSaveName : TYPE
-        The save name of the model.
-    scriptName : TYPE
-        The savename of the script without extension.
-    generator : TYPE
-        The generator used in the gym.
-    optionalArgs : TYPE, optional
-        Optional arguments for the generator.. The default is {}.
-
-    Returns
-    -------
-    None.
-
-    '''
-    env = Frame.FrameworkGym(generator = generator, generateMovieScript=True, additionalOptions=optionalArgs)
-    model = MaskablePPO.load(modelSaveName,  env=env)
+def GenerateMovie(movieFilename, modelName, gymGenerator, painterGenerator, fps, timeScale, optionalArgsGym = {}):
+    env = Frame.FrameworkGym(generator = gymGenerator, generateMovieScript=True, additionalOptions=optionalArgsGym)
+    model = MaskablePPO.load(modelName,  env=env)
 
     env = model.get_env()
     obs = env.reset()
@@ -93,32 +80,12 @@ def GenerateScript(modelSaveName, scriptName,  generator, optionalArgs = {}):
         action_masks = get_action_masks(env)
         action, _state = model.predict(obs, deterministic=True, action_masks=action_masks)
         obs, reward, terminated, info = env.step(action)
+        
+        
+    movieScript = info[0]['Script']
     
-     
-    file = open(scriptName + ".pkl", 'wb') 
-    pk.dump(info[0]['Script'], file)
-    
-def GenerateMovieFromScript(scriptFilename, movieFilename, painterGenerator, fps, timeScale):
-    '''
-    Generates a movie from the previously generated script.
-
-    Parameters
-    ----------
-    scriptFilename : TYPE
-        The filename of the script.
-    movieFilename : TYPE
-        The movie filename we generate.
-    painterGenerator : TYPE
-        The class for the specific painting job.
-    fps : TYPE
-        The fps with which we render.
-    timeScale : TYPE
-        Time scale > 1 video is showing things faster than in reality.
-
-    Returns
-    -------
-    None.
-
-    '''
+   
     movie = Movie.MovieMaker(painterGenerator)
-    movie.MakeMovie(movieFilename, scriptFilename, fps, timeScale)
+    movie.MakeMovie(movieFilename, movieScript, fps, timeScale)    
+    
+    

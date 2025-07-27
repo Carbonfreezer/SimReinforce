@@ -5,14 +5,14 @@ Created on Thu Jul 24 15:19:33 2025
 @author: Luerig
 """
 
+import copy
 
-import pickle as pk
 class ScriptGenerator:
     
-    def __init__(self, simpyEnv = None):
+    def __init__(self, simpyEnv = None, logList=[]):
         self.__env = simpyEnv
         '''The simpy environment to ask for the current time'''
-        self.__logList = []
+        self.__logList = logList
         '''The list with all the log entries from the script'''
         self.__openEntries = {}
         '''The dictionary that contains the association between actor and the opened entry'''
@@ -64,27 +64,11 @@ class ScriptGenerator:
         
         for entry in self.__openEntries.values():
             entry['End'] =  self.__env.now
+        
         self.__openEntries = {}
-        return self.__logList
+        return  copy.deepcopy( self.__logList)
         
 
-    @staticmethod
-    def LoadScript( fileName):
-        '''
-        Loads a script from a filename.
-
-        Parameters
-        ----------
-        fileName : TYPE
-            File to load.
-
-     
-
-        '''
-        handle = open(fileName, 'rb')
-        script = ScriptGenerator()
-        script.__logList =  pk.load(handle)
-        return script
     
     def GetAllInterpolatedEntries(self, time):
         '''
