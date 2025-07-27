@@ -10,6 +10,21 @@ import copy
 class ScriptGenerator:
     
     def __init__(self, simpyEnv = None, logList=[]):
+        '''
+        Initializes the script generator.
+
+        Parameters
+        ----------
+        simpyEnv :  , optional
+            The simpy environment. This is a must when generating the log in simulation. The default is None.
+        logList :  , optional
+            This is the list with the log entries. This entry is only used when the video gets generated. The default is [].
+
+        Returns
+        -------
+        None.
+
+        '''
         self.__env = simpyEnv
         '''The simpy environment to ask for the current time'''
         self.__logList = logList
@@ -18,9 +33,6 @@ class ScriptGenerator:
         '''The dictionary that contains the association between actor and the opened entry'''
 
     
-    @staticmethod    
-    def __makeLogEntry(startTime, actor, stateInformation):
-        return {'Start' : startTime, 'Actor' : actor, 'Info' : stateInformation}
     
     def AddAction(self,  actor, stateInformation):
         '''
@@ -28,10 +40,11 @@ class ScriptGenerator:
 
         Parameters
         ----------
-        actor : TYPE
+        actor :  
             The actor who does it.
-        stateInformation : TYPE
+        stateInformation :  
             Information concerning the state of the actor.
+            This may be some arbitrary information.
 
         Returns
         -------
@@ -43,7 +56,7 @@ class ScriptGenerator:
         if actor in self.__openEntries:
             self.__openEntries[actor]['End'] = currentTime
             
-        newLog = self.__makeLogEntry(currentTime, actor, stateInformation)
+        newLog = {'Start' : currentTime, 'Actor' : actor, 'Info' : stateInformation}
         self.__logList.append(newLog)
         self.__openEntries[actor] = newLog
         
@@ -56,7 +69,7 @@ class ScriptGenerator:
      
         Returns
         -------
-        TYPE
+         
             The loglist.
 
 
@@ -76,13 +89,16 @@ class ScriptGenerator:
 
         Parameters
         ----------
-        time : TYPE
-            DESCRIPTION.
+        time :  
+            The time where to extract the data for.
 
         Returns
         -------
-        result : TYPE
-            The status information of all relevant actors.
+        result :  
+          The result set is a dictionary associating the name of an actor with another dictionary.
+          This dictionary has the entries 'Progress' which is s float between [0,1] 
+          and can be used to map the situation to a continuous change, and an entry 'Info' which is arbitrary data
+          from the logging system.
 
         '''
         filteredEntries = (x for x in self.__logList if x['Start'] <= time and x['End'] > time)
@@ -90,18 +106,31 @@ class ScriptGenerator:
         for entry in filteredEntries:
             interPolValue = (time - entry['Start']) / (entry['End'] - entry['Start'])
             assert not entry['Actor'] in result, "Double Actor information"
-            result[entry['Actor']] =  {'Factor' : interPolValue, 
+            result[entry['Actor']] =  {'Progress' : interPolValue, 
                                        'Info' : entry['Info']}
             
         return result
     
     
     def GetLastState(self):
+        '''
+        Gets the last state of the log. Needed for closing a movie.
+        Result is the same as for GetAllInterpolatedEntries.
+
+        Returns
+        -------
+        result :  
+            The result set is a dictionary associating the name of an actor with another dictionary.
+            This dictionary has the entries 'Progress' which is s float between [0,1] 
+            and can be used to map the situation to a continuous change, and an entry 'Info' which is arbitrary data
+            from the logging system.
+
+        '''
         endTime = self.MaxTime
         filteredEntries = (x for x in self.__logList if x['End'] == endTime)
         result = {}
         for entry in filteredEntries:
-            result[entry['Actor']] =  {'Factor' : 1.0, 
+            result[entry['Actor']] =  {'Progress' : 1.0, 
                                        'Info' : entry['Info']}
             
         return result
@@ -113,11 +142,11 @@ class ScriptGenerator:
     @property
     def MaxTime(self):
         '''
-        Asks for the maximum (exclusive time) of the script.
+        Asks for the maximum time of the script.
 
         Returns
         -------
-        TYPE
+         
             The complete time of the script.
 
         '''

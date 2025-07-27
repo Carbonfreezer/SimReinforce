@@ -13,6 +13,14 @@ import Framework.ContinuousBar as Continuos
 class FactoryPainter:
     
     def __init__(self):
+        '''
+        The example factor painter initializes all, that is required to paint a given situation of the factory.
+
+        Returns
+        -------
+        None.
+
+        '''
         self.__backGround = pg.image.load("Background.png")
         positionDict = {'Entrance' : [40,218],
                         'Exit':[1024-40,218],
@@ -71,11 +79,38 @@ class FactoryPainter:
     
     @property
     def ImageSize(self):
+        '''
+        Returns the size of the background image and therefore the video
+
+        Returns
+        -------
+            Pair of width and height of the desired video.
+
+        '''
         rect = self.__backGround.get_rect()
         return (rect.width, rect.height)
         
         
     def DrawScene(self, surface,  situations):
+        '''
+        Paints the complete situation onto a surface.
+
+        Parameters
+        ----------
+        surface :  
+            The surface where to paint the situation to.
+        situations :  
+            The dictionary with the current situation. 
+            This dictionary is associating the name of an actor with another dictionary.
+            This dictionary has the entries 'Progress' which is s float between [0,1] 
+            and can be used to map the situation to a continuous change, and an entry 'Info' which is arbitrary data
+            from the logging system.
+
+        Returns
+        -------
+        None.
+
+        '''
         # First background
         surface.blit(self.__backGround, (0,0))
         # First we draw the depots,
@@ -87,7 +122,7 @@ class FactoryPainter:
         # Now come the actors
         for act in range(2):
             actorInfo = situations[f"A{act}"]["Info"]
-            actorInterpol = situations[f"A{act}"]["Factor"]
+            actorInterpol = situations[f"A{act}"]["Progress"]
             
             if actorInfo['State'] == 'Working':
                 drawingPoint = self.__pointCollection.GetPoint(f"Stat{actorInfo['Station']}")
@@ -112,12 +147,12 @@ class FactoryPainter:
         numItems = situations['Objs']['Info']
         img = self.__font.render(f"{numItems}", True, pg.Color(255,255,255))
         Pos.PositionManager.PaintSprite(surface, img, self.__pointCollection.GetPoint("ObjT"))
-        time = situations['Time']['Factor']
+        time = situations['Time']['Progress']
         self.__timePaint.paint(surface,  self.__pointCollection.GetPoint('Bar'),  1.0 - time)
         
         # Final overlay
         surface.blit(self.__foreGround, (0,0))
-        #self.__pointCollection.DebugDraw(surface)
+        # self.__pointCollection.DebugDraw(surface)
        
                
         

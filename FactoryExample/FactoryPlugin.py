@@ -24,6 +24,19 @@ class FactoryPlugin:
     '''Contains the transfer times from yource to destination station'''
     
     def __init__(self, generatesMovie):
+        '''
+        
+
+        Parameters
+        ----------
+        generatesMovie :  
+            bool if we want to generate a movie
+
+        Returns
+        -------
+        None.
+
+        '''
         self.__generatesMovie = generatesMovie
 
       
@@ -31,7 +44,7 @@ class FactoryPlugin:
     @property
     def ActionArray(self):
         '''
-            he amount of actors the environment support. Every action for every worker.
+            The amount of actors the environment support. Every action for every worker.
             Here for every worker processing, going to station 1,2,3,4
 
         Returns
@@ -46,6 +59,15 @@ class FactoryPlugin:
     
     @property
     def Terminated(self):
+        '''
+        Indicates, if the environment is terminated (meaning episode s over.)
+
+        Returns
+        -------
+         
+            True if over.
+
+        '''
         return self.__env.now > FactoryPlugin.MaxTime # We termiate after 1000
     
     @property
@@ -69,7 +91,7 @@ class FactoryPlugin:
 
         Returns
         -------
-        TYPE
+         
             penalty for dedalock.
 
         '''
@@ -82,7 +104,7 @@ class FactoryPlugin:
 
         Returns
         -------
-        Type
+         
             The movie script also closes the movie script.
 
         '''
@@ -106,7 +128,7 @@ class FactoryPlugin:
                 # 4: Beeing at station 1,2,3,4 4: Transition to station 1,2,3,4
                 'Worker 1' : gym.spaces.Discrete(8),
                 'Worker 2' : gym.spaces.Discrete(8),
-                'Time' : gym.spaces.Box(0.0, 1.0, shape=(1,), dtype=np.float32)
+                'Time' : gym.spaces.Box(0.0, 1.0, shape=(1,), dtype =np.float32)
                 }
     
     
@@ -116,9 +138,9 @@ class FactoryPlugin:
 
         Parameters
         ----------
-        actorChosen : TYPE
+        actorChosen :  
             The actor that performs the action.
-        localAction : TYPE
+        localAction :  
             The action done on that actor.
 
         Returns
@@ -141,9 +163,9 @@ class FactoryPlugin:
 
         Parameters
         ----------
-        actorChosen : TYPE
+        actorChosen :  
             The actor that performs the action.
-        localAction : TYPE
+        localAction :  
             The action done on that actor.
 
         Returns
@@ -235,12 +257,12 @@ class FactoryPlugin:
 
         Parameters
         ----------
-        actorChosen : TYPE
+        actorChosen :  
             The actor we want to get the mask for.
 
         Returns
         -------
-        TYPE
+         
             Array with the indication which actions are legal in the current situation.
 
         '''
@@ -256,7 +278,7 @@ class FactoryPlugin:
 
         Returns
         -------
-        accReward : TYPE
+        accReward :  
             Returns accumulated reward.
 
         '''
@@ -271,9 +293,9 @@ class FactoryPlugin:
 
         Parameters
         ----------
-        simPyEnv : TYPE
+        simPyEnv :  
             The simpy environment we use for simulation. This is atumatically refreshed on every reset.
-        randGen : TYPE
+        randGen :  
             The random number generator for the environment
 
         '''

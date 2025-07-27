@@ -10,6 +10,29 @@ import pygame as pg
 
 class Bar():
     def __init__(self,  insetWidth, width, height, bgColor,  fgColor, orientation):
+        '''
+        Super class for continuous and discreet progress bar.
+
+        Parameters
+        ----------
+        insetWidth :  
+            distance between bar and border and in discreet mode also for the segments.
+        width :  
+            width of the bar in pixels.
+        height :  
+            height of the bar in pixels.
+        bgColor :  
+            background color of the bar.
+        fgColor :  
+            foreground color of the bar.
+        orientation :  
+            orientation 0 : downwards, 1 : right, 2: updwards, 3 : left
+
+        Returns
+        -------
+        None.
+
+        '''
         self._insetWidth = insetWidth
         self._bgColor = bgColor
         self._fgColor = fgColor

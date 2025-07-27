@@ -9,6 +9,19 @@ Created on Fri Jul 25 09:22:02 2025
 class CustomEvalCallback:
     '''This is a simple helper class to generate a snapshot with a certain filename'''
     def __init__(self, fileName):
+        '''
+        Stores the fielname we want to save the model to on successfull checkpoint.
+
+        Parameters
+        ----------
+        fileName : TYPE
+            The file we want to save the model to.
+
+        Returns
+        -------
+        None.
+
+        '''
         self.__fileName = fileName
         
     def init_callback(self, model):

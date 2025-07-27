@@ -27,19 +27,19 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
 
     Parameters
     ----------
-    modelSaveName : TYPE
+    modelSaveName :  
         The filename, where the model should get saved to.
-    generator : TYPE
+    generator :  
         The generator class for the specific Gym.
-    optionalArgs : TYPE, optional
+    optionalArgs :  , optional
         Optional args for the gym generator. The default is {}.
-    additionalPPOargs : TYPE, optional
+    additionalPPOargs :  , optional
         additional args for the Mskable PPO trainer. The default is {}.
-    macroBatches : TYPE, optional
+    macroBatches :  , optional
         The number of macro batches used in training. The default is 5.
-    sizeOfMacroBatch : TYPE, optional
+    sizeOfMacroBatch :  , optional
         The number of episodes generated per macro batch. The default is 100_000.
-    evaluationRuns : TYPE, optional
+    evaluationRuns :  , optional
         The number of evaluation runs executed after macro batch. The default is 1000.
 
     Returns
@@ -70,6 +70,31 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
 
 
 def GenerateMovie(movieFilename, modelName, gymGenerator, painterGenerator, fps, timeScale, optionalArgsGym = {}):
+    '''
+    Generates a movie from a trained model.
+
+    Parameters
+    ----------
+    movieFilename : 
+        The movie filename without extension (will be .mp4)
+    modelName : 
+        The name of the model we load to generate the movie.
+    gymGenerator : 
+        The implemented generator class for the gym.
+    painterGenerator : 
+        The implemented visualizer class of the systemn.
+    fps :
+        frames per second for the movie.
+    timeScale : 
+        time scale for movie and simulation, if larger one movie is shorter than reality.
+    optionalArgsGym :  optional
+        Optional arguments for the generator gym class. The default is {}.
+
+    Returns
+    -------
+    None.
+
+    '''
     env = Frame.FrameworkGym(generator = gymGenerator, generateMovieScript=True, additionalOptions=optionalArgsGym)
     model = MaskablePPO.load(modelName,  env=env)
 

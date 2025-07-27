@@ -19,11 +19,11 @@ class FrameworkGym(gym.Env):
 
         Parameters
         ----------
-        generator : TYPE
+        generator :  
             DESCRIPTION. The class name of the concrete implementation.
-        generateMovieScript : TYPE, optional
+        generateMovieScript :  , optional
             DESCRIPTION. Indicates if we want to generate a movie script, default is false
-        additionalOptions : TYPE, optional
+        additionalOptions :  , optional
             DESCRIPTION. additional parameters to generate the internal gym.
 
         Returns
@@ -49,14 +49,14 @@ class FrameworkGym(gym.Env):
 
         Parameters
         ----------
-        seed : TYPE, optional
+        seed :  , optional
             DESCRIPTION. The seed for the random number generator.
-        options : TYPE, optional
+        options :  , optional
             DESCRIPTION. Additional ooptions
 
         Returns
         -------
-        TYPE
+         
             The observations after reset.
         dict
             Optinal information empty here.
@@ -76,14 +76,14 @@ class FrameworkGym(gym.Env):
 
         Parameters
         ----------
-        action : TYPE
+        action :  
             The general action number
-        actorToChoose : TYPE
+        actorToChoose :  
             The we want to get the action for.
 
         Returns
         -------
-        TYPE
+         
             The actor specific action.
 
         '''
@@ -96,7 +96,7 @@ class FrameworkGym(gym.Env):
 
         Returns
         -------
-        observation : TYPE
+        observation :  
             Complete observation with active actor.
 
         '''
@@ -111,20 +111,20 @@ class FrameworkGym(gym.Env):
 
         Parameters
         ----------
-        action : TYPE
+        action :  
             The global chosen action.
 
         Returns
         -------
-        observation : TYPE
+        observation :  
             The observation of the situation.
-        reward : TYPE
+        reward :  
             Reward gotten on action.
-        isTerminated : TYPE
+        isTerminated :  
             Are we terminated.
         bool
             Always false for truncated.
-        infoDir : TYPE
+        infoDir :  
             Contains the movie script if required and if sepisode terminated,.
 
         '''
@@ -162,7 +162,7 @@ class FrameworkGym(gym.Env):
 
         Returns
         -------
-        res : TYPE
+        res :  
             Array with valid actions.
 
         '''
