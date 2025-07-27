@@ -7,7 +7,7 @@ As an example, I have added a factory simulation.
 
 https://github.com/user-attachments/assets/0347a139-d725-4e17-ae06-412c79cfa64d
 
-The factory has three processing stages. The second stage has two working places, the first and the third one. 
+The factory has three processing stages. The second stage has two working places; the first and the third have one each. 
 Processing stages are coupled via buffers with 10 places each. Working on stages 1 and 3 takes 5 seconds, and on stage 2, it takes 10 seconds. 
 Workers may change their working places, and the transition from stage 1 to 2 and from 2 to 3 takes 4 seconds, while the transition from stage 1 to 3 takes 8 seconds. 
 Theoretically, workers can also change between the two working places at stage 2, which would take 1 second. The objective is now for the RL Agent to get
