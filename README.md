@@ -3,15 +3,25 @@ This framework integrates Simpy, StableBaselines, and GamePy to render a time-co
 
 
 ## Example 
-As an example, I have added a factory simulation.
+The demonstration features a three-stage manufacturing process where an RL agent optimizes worker allocation to maximize production within a 5-minute timeframe:
 
 https://github.com/user-attachments/assets/0347a139-d725-4e17-ae06-412c79cfa64d
 
-The factory has three processing stages. The second stage has two working places; the first and the third have one each. 
-Processing stages are coupled via buffers with 10 places each. Working on stages 1 and 3 takes 5 seconds, and on stage 2, it takes 10 seconds. 
-Workers may change their working places, and the transition from stage 1 to 2 and from 2 to 3 takes 4 seconds, while the transition from stage 1 to 3 takes 8 seconds. 
-Theoretically, workers can also change between the two working places at stage 2, which would take 1 second. The objective is now for the RL Agent to get
-as many items manufactured in 5 minutes as possible. The video is playing at 5 times the normal speed. If you train your model yourself, it might take a couple of
+#### System Architecture:
+- Stage 1 & 3: Single workstation each (5-second processing time)
+- Stage 2: Dual workstations (10-second processing time)
+- Buffer capacity: 10 items between each stage
+#### Worker mobility: Dynamic reallocation between stages 
+- Stage 1↔2 or Stage 2↔3: 4 seconds
+- Stage 1↔3: 8 seconds
+- Within Stage 2 workstations: 1 second
+
+#### Objective: 
+Train the RL agent to optimize worker positioning and workflow to achieve maximum throughput in the given time constraint.
+
+The generated visualization runs at 5x speed to efficiently demonstrate the learning process and system dynamics.
+
+If you train your model yourself, it might take a couple of
 experiments to get to 28 items manufactured. 27 can be reached pretty reliably.
 
 ## Used python modules
