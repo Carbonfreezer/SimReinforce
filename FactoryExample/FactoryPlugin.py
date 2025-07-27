@@ -105,7 +105,7 @@ class FactoryPlugin:
         Returns
         -------
          
-            The movie script also closes the movie script.
+            The movie script.
 
         '''
         

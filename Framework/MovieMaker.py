@@ -96,7 +96,6 @@ class MovieMaker:
 
         '''
         self.__script = ScriptGenerator.ScriptGenerator(logList=logList)
-        self.__timeScale = timeScale
         self.__drawingSurface = pg.Surface(self.__painter.ImageSize)
         deltaTime = timeScale / fps
         amounOfFrames = int(self.__script.MaxTime / deltaTime)
