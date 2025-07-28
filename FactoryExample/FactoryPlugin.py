@@ -68,7 +68,7 @@ class FactoryPlugin:
             True if over.
 
         '''
-        return self.__env.now > FactoryPlugin.MaxTime # We termiate after 1000
+        return self.__env.now > FactoryPlugin.MaxTime 
     
     @property
     def TimeOut(self):
