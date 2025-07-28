@@ -93,6 +93,41 @@ class PositionManager:
         rect = source.get_rect()
         targetPoint = point - [rect.width * 0.5, rect.height * 0.5]
         destination.blit(source, targetPoint)
+     
+        
+    @staticmethod 
+    def PaintSpritePointing(destination, source, drawingPoint, orientationPoint):
+        '''
+        Draws a orientated sprite like an arrow. The sprite is painted  centered at the drawing
+        point and its horrizontal axis is orientation to the orientattionPoint
+
+        Parameters
+        ----------
+        destination :
+            Destination surface to blit to.
+        source : 
+            Source surface that is painted.
+        drawingPoint : TYPE
+            The point where we draw to.
+        orientationPoint : TYPE
+            The point we orientate the right direction of the sprite to.
+
+        Returns
+        -------
+        None.
+
+        '''
+        
+        delta = orientationPoint - drawingPoint
+        angle = np.arctan2(delta[1], delta[0])
+        angle = np.rad2deg(angle)
+        
+        rect = source.get_rect()
+        targetPoint = drawingPoint - [rect.width * 0.5, rect.height * 0.5]
+        
+        finalImage = pg.transform.rotate(source, angle)
+        destination.blit(finalImage, targetPoint)
+        
     
     
     
