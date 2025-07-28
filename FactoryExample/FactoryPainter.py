@@ -21,7 +21,7 @@ class FactoryPainter:
         None.
 
         '''
-        self.__backGround = pg.image.load("Background.png")
+      
         positionDict = {'Entrance' : [40,218],
                         'Exit':[1024-40,218],
                         'DepotA':[398.5, 218],
@@ -61,18 +61,18 @@ class FactoryPainter:
                                pFunc(['DepotB','Stat3', 'Exit'])]
             
                              
-                             
-        self.__working = [pg.image.load("Working1.png"), pg.image.load("Working2.png")] 
-        self.__travelling = [pg.image.load("Travelling1.png"), pg.image.load("Travelling2.png")]
-        self.__stalled = [pg.image.load("Stalled1.png"), pg.image.load("Stalled2.png")]
+        self.__backGround = pg.image.load("Media/Background.png")                         
+        self.__foreGround = pg.image.load("Media/Foreground.png")   
+        self.__working = [pg.image.load("Media/Working1.png"), pg.image.load("Media/Working2.png")] 
+        self.__travelling = [pg.image.load("Media/Travelling1.png"), pg.image.load("Media/Travelling2.png")]
+        self.__stalled = [pg.image.load("Media/Stalled1.png"), pg.image.load("Media/Stalled2.png")]
         
         self.__depotPaint = Discreet.DiscreetBar(10, 3, 150, 75, 'Grey', 'Blue', 1)
-        self.__objectImage = pg.image.load("Product.png")
+        self.__objectImage = pg.image.load("Media/Product.png")
         self.__timePaint = Continuos.ContinuousBar(10, 799, 118, 'Grey', 'Blue', 3)
         
         self.__font = pg.font.SysFont(None, 48)
         
-        self.__foreGround = pg.image.load("Foreground.png")
         
                                                  
         
