@@ -55,7 +55,7 @@ sprites at specific positions on the screen. Positions can be handed over with n
 The main functions are in **GlobalFunctions**. There are two functions: one to train the MaskabePPO learner (**PerformTraining**) and another to execute an episode, log it, and generate a video (**GenerateMovie**).
 
 ## Getting Started
-The best way to get started is to look at the Python files in the **FactoryExample** folder. The file **TestFunctions** serves as the main entry point. The **FactoryPlugin** file is the plugin for the OpenGym environment, responsible for the simulation. The file **FactoryPainter** 
+The best way to get started is to look at the Python files in the **FactoryExample** folder. The file **TestFunctions** serves as the main entry point. The **FactorySimulator** file is the plugin for the OpenGym environment, responsible for the simulation. The file **FactoryPainter** 
  is the plugin that is responsible for rendering a specific situation. If you want to program your application, create a new subfolder and implement these classes as well. Take a look at the public properties and methods. You also need to implement them. The link between the simulation and the rendering is the log
  for the script generator. The best approach is to consider the changes in your simulation. These things become specific to a particular actor and are defined in the reset function of your plugin. Whenever these objects change, you can log the required information with the **AddAction** command. How these objects get visualized later on is handled in the painter module. 
 

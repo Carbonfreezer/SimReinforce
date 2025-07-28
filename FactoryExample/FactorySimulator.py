@@ -10,7 +10,7 @@ import simpy
 import Framework.ScriptGenerator as Movie
 import numpy as np
 
-class FactoryPlugin:
+class FactorySimulator:
     
     MaxFillingInStation = 10
     MaxTime = 300
@@ -68,7 +68,7 @@ class FactoryPlugin:
             True if over.
 
         '''
-        return self.__env.now > FactoryPlugin.MaxTime 
+        return self.__env.now > FactorySimulator.MaxTime 
     
     @property
     def TimeOut(self):
@@ -123,8 +123,8 @@ class FactoryPlugin:
             The observation space.
 
         '''
-        return {'Filling A': gym.spaces.Discrete(FactoryPlugin.MaxFillingInStation + 1),
-                'Filling B': gym.spaces.Discrete(FactoryPlugin.MaxFillingInStation + 1),
+        return {'Filling A': gym.spaces.Discrete(FactorySimulator.MaxFillingInStation + 1),
+                'Filling B': gym.spaces.Discrete(FactorySimulator.MaxFillingInStation + 1),
                 # 4: Beeing at station 1,2,3,4 4: Transition to station 1,2,3,4
                 'Worker 1' : gym.spaces.Discrete(8),
                 'Worker 2' : gym.spaces.Discrete(8),
@@ -240,7 +240,7 @@ class FactoryPlugin:
             destination = localAction - 1
             currentStation = self.__workerAtOrGoingToStation[actorChosen]
             self.__workerAtOrGoingToStation[actorChosen] = destination
-            time = FactoryPlugin.TransferTime[currentStation][destination]
+            time = FactorySimulator.TransferTime[currentStation][destination]
             if self.__generatesMovie:
                 self.__movie.AddAction( actorCode, 
                                       {'State': 'Walking' , 
@@ -320,8 +320,8 @@ class FactoryPlugin:
         '''Flags if the worker is currently moving'''
         self.__workerAtOrGoingToStation = [0, 1]
         '''Flags where the worker is currently at or moving to'''
-        self.__fillingOfDepot = [simpy.Container(simPyEnv, capacity = FactoryPlugin.MaxFillingInStation),
-                                 simpy.Container(simPyEnv, capacity = FactoryPlugin.MaxFillingInStation)
+        self.__fillingOfDepot = [simpy.Container(simPyEnv, capacity = FactorySimulator.MaxFillingInStation),
+                                 simpy.Container(simPyEnv, capacity = FactorySimulator.MaxFillingInStation)
                                  ] 
         '''Contains the filling of the current depot'''
         self.__stationOccupied = [True, True, False, False]
@@ -346,5 +346,5 @@ class FactoryPlugin:
                     (4 if self.__workerCurrentlyInTransfer[0] else 0),
                 'Worker 2' :   self.__workerAtOrGoingToStation[1] + 
                     (4 if self.__workerCurrentlyInTransfer[1] else 0)  ,
-                'Time' : [np.clip(self.__env.now / FactoryPlugin.MaxTime, 0.0, 1.0)]
+                'Time' : [np.clip(self.__env.now / FactorySimulator.MaxTime, 0.0, 1.0)]
                     }
