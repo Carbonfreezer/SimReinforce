@@ -35,6 +35,8 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
         Optional args for the gym generator. The default is {}.
     additionalPPOargs :  , optional
         additional args for the Mskable PPO trainer. The default is {}.
+    numOfParallelEnvs:  , optional
+        The number of environments we want to run in parallel. Depends on the amount of CPUs you have. The default is 1.
     macroBatches :  , optional
         The number of macro batches used in training. The default is 5.
     sizeOfMacroBatch :  , optional
