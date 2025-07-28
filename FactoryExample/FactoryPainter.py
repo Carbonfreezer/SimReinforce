@@ -6,9 +6,9 @@ Created on Fri Jul 25 12:31:33 2025
 """
 
 import pygame as pg
-import Framework.PositionManager as Pos
-import Framework.DiscreetBar as Discreet
-import Framework.ContinuousBar as Continuos
+import Framework.Graphics.PositionManager as Pos
+import Framework.Graphics.DiscreetBar as Discreet
+import Framework.Graphics.ContinuousBar as Continuos
 
 class FactoryPainter:
     

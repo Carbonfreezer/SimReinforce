@@ -7,7 +7,7 @@ Created on Fri Jul 25 15:50:32 2025
 
 import pygame as pg
 
-import Framework.Bar as Bar
+import Framework.Graphics.Bar as Bar
 
 
 class DiscreetBar(Bar.Bar):
