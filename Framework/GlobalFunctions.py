@@ -57,12 +57,11 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
         env = make_vec_env(lambda : Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs), 
                            n_envs= numOfParallelEnvs)
         
-    test_env = Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs)  
     
     model = MaskablePPO("MultiInputPolicy", env, **additionalPPOargs)
     
    
-    evalCallback = MaskableEvalCallback( eval_env=test_env, 
+    evalCallback = MaskableEvalCallback( eval_env=env, 
                                         callback_on_new_best = Custom.CustomEvalCallback(modelSaveName),
                                         eval_freq=sizeOfMacroBatch / numOfParallelEnvs,
                                         n_eval_episodes=evaluationRuns)
@@ -71,7 +70,7 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
 
 
 
-def GenerateMovie(movieFilename, modelName, gymGenerator, painterGenerator, fps, timeScale, optionalArgsGym = {}):
+def GenerateMovie(movieFilename, modelName, gymGenerator, painterGenerator, fps, timeScale, randomSeed = None, optionalArgsGym = {}):
     '''
     Generates a movie from a trained model.
 
@@ -89,6 +88,8 @@ def GenerateMovie(movieFilename, modelName, gymGenerator, painterGenerator, fps,
         frames per second for the movie.
     timeScale : 
         time scale for movie and simulation, if larger one movie is shorter than reality.
+    randomSeed: optional
+        The random seed used in the gym to make simulations reproducable if requested.
     optionalArgsGym :  optional
         Optional arguments for the generator gym class. The default is {}.
 
@@ -101,6 +102,8 @@ def GenerateMovie(movieFilename, modelName, gymGenerator, painterGenerator, fps,
     model = MaskablePPO.load(modelName,  env=env)
 
     env = model.get_env()
+    if randomSeed:
+        env.seed(randomSeed)
     obs = env.reset()
     terminated = False
     while not terminated:

@@ -142,7 +142,7 @@ class CashierSimulator:
         return {'Line A': gym.spaces.Discrete(CashierSimulator.MaxFillingCashLines + 1),
                 'Line B': gym.spaces.Discrete(CashierSimulator.MaxFillingCashLines + 1),
                 'Line C': gym.spaces.Discrete(CashierSimulator.MaxFillingCashLines + 1),
-                # 3: Beeing at cash 1,2,3 : Transition to cash 1,2,3
+                # 3: Beeing at cash 1,2,3 :  3 Transition to cash 1,2,3
                 'Slow' : gym.spaces.Discrete(6),
                 'Fast' : gym.spaces.Discrete(6),
                 # Dispacther situation, 0: No customer processing, 1 -3 : customer send to line 0,1,2
@@ -174,7 +174,7 @@ class CashierSimulator:
                             
                 # Dispacther situation, 0: No customer processing, 1 -3 : customer send to line 0,1,2
                 'Dispatch' : self.__dispatcherState,
-                'Time' :  [np.clip(self.__env.now / CashierSimulator().MaxTime, 0.0, 1.0)]
+                'Time' :  [np.clip(self.__env.now / CashierSimulator.MaxTime, 0.0, 1.0)]
                 }
     
     
@@ -193,7 +193,7 @@ class CashierSimulator:
 
         '''
         
-        self.__rewward = 0.0
+        self.__reward = 0.0
         self.__env = simPyEnv
         self.__accumulatedCustomers = 0
        
@@ -214,14 +214,6 @@ class CashierSimulator:
             self.__move.AddAction('CashFast', {'State' : 'Working', 'Station' : 1})
             
             
-            # Dow we have an entering uctomer at the beginning of the cashier?
-            self.__move.AddAction('CustArrive0', False)
-            self.__move.AddAction('CustArrive1', False)
-            self.__move.AddAction('CustArrive2', False)
-            
-            # Where dis the last dipatch happen?
-            self.__movie.AddAction('LastDispatch', 0)
-            
             # Customers served.
             self.__movie.AddAction( 'Custs', 0)
             self.__movie.AddAction( 'Time', None)
@@ -237,7 +229,7 @@ class CashierSimulator:
                               simpy.Container(simPyEnv, capacity = CashierSimulator.MaxFillingCashLines)
                              ] 
         
-        self.__customerArrivalContainer = simpy.Container(simPyEnv, capacity = 1)
+        self.__customerArrivalContainer = simpy.Container(simPyEnv, capacity = 4)
         
         
         '''The container used for the customer arrival process.'''
@@ -250,7 +242,7 @@ class CashierSimulator:
         '''0: Currently waiting for customers to arrive, 1-3 disptaching to line 1-3.'''
         
         # The spawner that generates the customers.
-        self.__env.process(self.__customerSpawner)
+        self.__env.process(self.__customerSpawner())
         
         self.__initialDispatcher = True
         '''Flags that this is an iniital dispatcher call. Because the dispatcher may get called, when they are 
@@ -262,14 +254,14 @@ class CashierSimulator:
         '''
         The endless customer spawner
 
-        Returns
+        Yields
         -------
-        None.
+            Waiting events.
 
         '''
         while True:
-            self.__waiting.WaitExponential(CashierSimulator.MeanArrivalTimeCustomer)
-            self.__customerArrivalContainer.put(1)    
+            yield self.__waiting.WaitExponential(CashierSimulator.MeanArrivalTimeCustomer)
+            yield self.__customerArrivalContainer.put(1)    
       
     
     def PrepareAction(self, actorChosen, localAction):
@@ -295,7 +287,7 @@ class CashierSimulator:
         
         # The casheris have to pay attention when they relocate. 
         if localAction != 0:
-            source = self.__workerAtOrGoingToStation[actorChosen]
+            source = self.__cashierAtOrGoingToStation[actorChosen - 1]
             destination = localAction - 1
             self.__stationOccupied[source] = False
             self.__stationOccupied[destination] = True
@@ -312,9 +304,10 @@ class CashierSimulator:
         localAction : 
             The action we like to do.
 
-        Returns
+        Yields
         -------
-        None.
+            Waiting events for the simulation.
+
 
         '''
         
@@ -330,14 +323,16 @@ class CashierSimulator:
         # Where dis the last dipatch happen?
         if self.__generatesMovie:
             self.__movie.AddAction('LastDispatch', localAction)
-            self.__movie.AddAction(f"CustArrive{localAction}", True)
+            self.__movie.AddAction('CustArrive', localAction)
         
             
         yield self.__waiting.WaitGamma(CashierSimulator.TimeToDispatch)
-            
+        
+        
+        # Check if our destination que is full and we fail.
         if self.__customerQue[localAction].level == CashierSimulator.MaxFillingCashLines:
             self.__queOverrun = True
-            self.__rewward += CashierSimulator.FailureReward
+            self.__reward += CashierSimulator.FailureReward
             return
         
         # Now we can disptach the customer.
@@ -345,12 +340,32 @@ class CashierSimulator:
         
         # Arrival is finished.
         if self.__generatesMovie:
-            self.__movie.AddAction(f"CustArrive{localAction}", False)
+            self.__movie.CloseAction('CustArrive')
             
         # Now we wait for the next customer to be picked up.
         yield self.__customerArrivalContainer.get(1)
         
-       
+    
+        
+    def __TerminateLeavingCustomer(self, custActor):
+        '''
+        Simple function that terminates a certain action after a certain time.
+
+        Parameters
+        ----------
+        custActor : 
+            The action we want to terminate.
+
+        Yields
+        ------
+            Waiting event.
+
+        '''
+        
+        yield self.__waiting.WaitGamma(CashierSimulator.LeavingTime)
+        self.__movie.CloseAction(custActor)
+        
+        
     def __handleCashier(self, isSlowCashier, localAction):
         '''
         Handles the cashier.
@@ -362,11 +377,12 @@ class CashierSimulator:
         localAction : TYPE
             The action we do 0: process customer, 1-3: go to other station.
 
-        Returns
+        Yields
         -------
-        None.
+            Waiting events for the simulation.
 
         '''
+        
         actor = 'CashSlow' if isSlowCashier else 'CashFast'
         localIndex = 0 if isSlowCashier else 1
         currentStation = self.__cashierAtOrGoingToStation[localIndex]
@@ -390,17 +406,24 @@ class CashierSimulator:
                 self.__movie.AddAction(actor, {'State' : 'Stalled', 'Station' : currentStation})
            
             # Get a small reward for  the customer.
-            self.__rewward += CashierSimulator.CustomerReward
+            self.__reward += CashierSimulator.CustomerReward
             self.__accumulatedCustomers += 1
             if self.__generatesMovie:
                 self.__movie.AddAction( 'Custs', self.__accumulatedCustomers)
+            
+                
+            # Here we spawn a leaving customer.
+            if self.__generatesMovie:
+                custActor = f"LeavingCust{self.__accumulatedCustomers}"
+                self.__movie.AddAction(custActor, None)
+                self.__env.process(self.__TerminateLeavingCustomer(custActor))
         else:
             # In this case we want to transfer to a station.
             destination = localAction - 1
             
             self.__cashierCurrentlyInTransfer[localIndex] = True
             
-            self.__workerAtOrGoingToStation[localIndex] = destination
+            self.__cashierAtOrGoingToStation[localIndex] = destination
             if self.__generatesMovie:
                 self.__movie.AddAction( actor, 
                                       {'State': 'Walking' , 
@@ -422,17 +445,17 @@ class CashierSimulator:
         localAction :  
             The action done on that actor.
 
-        Returns
+        Yields
         -------
-        None.
+            Waiting events from the simulation.
 
         '''
       
-            
+      
         if actorChosen == 0:
-            yield self.__handleDispatcher(localAction)
+            yield from self.__handleDispatcher(localAction)
         else:
-            yield self.__handleCashier((actorChosen == 1), localAction)
+            yield from self.__handleCashier((actorChosen == 1), localAction)
       
             
     
@@ -472,8 +495,8 @@ class CashierSimulator:
             Returns accumulated reward.
 
         '''
-        accReward = self.__rewward
-        self.__rewward = 0.0
+        accReward = self.__reward
+        self.__reward = 0.0
         return accReward
     
         

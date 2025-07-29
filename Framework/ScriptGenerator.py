@@ -61,6 +61,24 @@ class ScriptGenerator:
         self.__openEntries[actor] = newLog
         
         
+    def CloseAction(self, actor):
+        '''
+        Closes an action.
+
+        Parameters
+        ----------
+        actor : 
+            The actor whose current action should terminate.
+
+        Returns
+        -------
+        None.
+
+        '''
+        self.__openEntries[actor]['End'] = self.__env.now
+        del self.__openEntries[actor]
+        
+        
     def CloseAllEntriesAndGetLogList(self):
         '''
         Closes all entries from all actors. Usually done at the end of the simuation.

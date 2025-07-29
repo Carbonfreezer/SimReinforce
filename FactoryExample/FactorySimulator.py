@@ -194,7 +194,7 @@ class FactorySimulator:
                 yield self.__fillingOfDepot[0].put(1) # We fill in 1 unit in depot 1
                 if self.__generatesMovie:
                     self.__movie.AddAction( 'DA',  self.__fillingOfDepot[0].level)
-                self.__rewward += 0.01 # We add a small reward for doing a first processing step.
+                self.__reward += 0.01 # We add a small reward for doing a first processing step.
             elif self.__workerAtOrGoingToStation[actorChosen] in [1,2]:
                 # The other two stations transfer 1 unit.
                 if self.__generatesMovie:
@@ -216,7 +216,7 @@ class FactorySimulator:
                 yield self.__fillingOfDepot[1].put(1) # Fills into the second depot.
                 if self.__generatesMovie:
                     self.__movie.AddAction('DB',  self.__fillingOfDepot[1].level)
-                self.__rewward += 0.01 # Get a small reward.
+                self.__reward += 0.01 # Get a small reward.
             else: # This must be the last station (3)
                 assert self.__workerAtOrGoingToStation[actorChosen] == 3, "This should be station 3"
                 if self.__generatesMovie:
@@ -233,7 +233,7 @@ class FactorySimulator:
                 self.__accumulatedObjects += 1
                 if self.__generatesMovie:
                     self.__movie.AddAction( 'Objs',  self.__accumulatedObjects)
-                self.__rewward += 0.98 # Get finsh reward.
+                self.__reward += 0.98 # Get finsh reward.
         else:
             # Here we are going to a station.
             self.__workerCurrentlyInTransfer[actorChosen] = True
@@ -282,8 +282,8 @@ class FactorySimulator:
             Returns accumulated reward.
 
         '''
-        accReward = self.__rewward
-        self.__rewward = 0.0
+        accReward = self.__reward
+        self.__reward = 0.0
         return accReward
     
         
@@ -300,7 +300,7 @@ class FactorySimulator:
 
         '''
         
-        self.__rewward = 0.0
+        self.__reward = 0.0
         self.__env = simPyEnv
         self.__accumulatedObjects = 0
         
