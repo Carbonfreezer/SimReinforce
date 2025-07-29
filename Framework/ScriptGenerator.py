@@ -5,8 +5,6 @@ Created on Thu Jul 24 15:19:33 2025
 @author: Luerig
 """
 
-import copy
-
 class ScriptGenerator:
     
     def __init__(self, simpyEnv = None, logList = None):
@@ -103,7 +101,7 @@ class ScriptGenerator:
             entry['End'] =  self.__env.now
         
         self.__openEntries = {}
-        return  copy.deepcopy( self.__logList)
+        return  self.__logList
         
 
     
