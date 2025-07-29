@@ -36,7 +36,7 @@ class CashierSimulator:
     
     '''Contains the transfer times from yource to destination station'''
     
-    def __init__(self, generatesMovie):
+    def __init__(self, generatesMovie, usesAutoDispatcher):
         '''
         
 
@@ -45,12 +45,15 @@ class CashierSimulator:
         generatesMovie :  
             bool if we want to generate a movie
 
+        usesAutoDispatcher:
+            In the case of auto dispatcher the dispatcher  does cyclic dispatching of customers.
         Returns
         -------
         None.
 
         '''
         self.__generatesMovie = generatesMovie
+        self.__usesAutoDispatcher = usesAutoDispatcher
 
       
     
@@ -58,8 +61,8 @@ class CashierSimulator:
     def ActionArray(self):
         '''
             The amount of actors the environment support. Every action for every worker.
+            We have the cahsier slow and fast. Both can process a customer or walk to cashier 0,1,2
             We have a the dispatcher that can dispatch to line 0,1,2
-            Then we have the cahsier slow and fast. Both can process a customer or walk to cashier 0,1,2
 
         Returns
         -------
@@ -68,7 +71,7 @@ class CashierSimulator:
 
         '''
        
-        return [3,4,4]
+        return  [4,4] if self.__usesAutoDispatcher else [4,4,3]
     
     
     @property
@@ -193,6 +196,9 @@ class CashierSimulator:
         self.__accumulatedCustomers = 0
         self.__customerIndexCounter = 0
         
+        # Used in the case of auto dispatcher.
+        self.__lastDispatched = 2
+        
         self.__waiting = WaitingModule.WaitingModule(simPyEnv, randGen)
         '''The module that can do random waiting'''
         
@@ -233,6 +239,9 @@ class CashierSimulator:
         self.__queOverrun = False
         '''Flags if any of the three quees is overrrun'''
         
+        if self.__usesAutoDispatcher:
+            self.__env.process(self.__runAutoDispatcher())
+        
 
        
         
@@ -257,18 +266,31 @@ class CashierSimulator:
         '''
         
         # The dispatcher has nothing to do.
-        if actorChosen == 0:
+        if actorChosen == 2:
            return
         
         # The casheris have to pay attention when they relocate. 
         if localAction != 0:
-            source = self.__cashierAtOrGoingToStation[actorChosen - 1]
+            source = self.__cashierAtOrGoingToStation[actorChosen]
             destination = localAction - 1
             self.__stationOccupied[source] = False
             self.__stationOccupied[destination] = True
         
     
   
+    def __runAutoDispatcher(self):
+        '''
+        Helper routine to run an automatic dispatcher.
+
+        Yields
+        ------
+            Waiting event for dispatching.
+
+        '''
+        while True:
+            self.__lastDispatched = (self.__lastDispatched + 1) % 3
+            yield from self.__handleDispatcher(self.__lastDispatched)
+            
         
     def __handleDispatcher(self, localAction):
         '''
@@ -287,7 +309,6 @@ class CashierSimulator:
         '''
         
       
-        self.__dispatcherState = localAction + 1
         # Where dis the last dipatch happen?
         if self.__generatesMovie:
             self.__movie.AddAction('LastDispatch', localAction)
@@ -300,6 +321,8 @@ class CashierSimulator:
         if self.__customerQue[localAction].level == CashierSimulator.MaxFillingCashLines:
             self.__queOverrun = True
             self.__reward += CashierSimulator.FailureReward
+            if self.__generatesMovie:
+                self.__movie.AddAction('QueBusted', localAction)
             return
         
         # Now we can disptach the customer.
@@ -388,6 +411,7 @@ class CashierSimulator:
             # In this case we want to transfer to a station.
             destination = localAction - 1
             
+            
             self.__cashierCurrentlyInTransfer[localIndex] = True
             
             self.__cashierAtOrGoingToStation[localIndex] = destination
@@ -419,10 +443,10 @@ class CashierSimulator:
         '''
       
       
-        if actorChosen == 0:
+        if actorChosen == 2:
             yield from self.__handleDispatcher(localAction)
         else:
-            yield from self.__handleCashier((actorChosen == 1), localAction)
+            yield from self.__handleCashier((actorChosen == 0), localAction)
       
             
     
@@ -445,7 +469,7 @@ class CashierSimulator:
 
 
         # The dispatcher can always pick any element.
-        if (actorChosen == 0):
+        if (actorChosen == 2):
             return [True, True, True]
         
         # The cahier can always work but we can not go to a station that is currently occupied.       

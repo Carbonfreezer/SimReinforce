@@ -13,7 +13,7 @@ from simpy.events import AnyOf
 
 class FrameworkGym(gym.Env):
       
-    def __init__(self, generator, generateMovieScript=False, additionalOptions={}):
+    def __init__(self, generator, generateMovieScript=False, additionalOptions=None):
         '''
         Generates the gmy in OpenAI gym format.
 

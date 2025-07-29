@@ -103,6 +103,8 @@ class CashierPainter:
         self.__custImage = pg.image.load("Media/Customer.png")
         self.__arrow = pg.image.load("Media/Arrow.png")
         
+        self.__cross = pg.image.load("Media/Cross.png")
+        
         
         self.__slowImages = {'Working' : pg.image.load("Media/SlowWorking.png"),
                              'Walking' : pg.image.load("Media/SlowTravelling.png"),
@@ -170,6 +172,11 @@ class CashierPainter:
         for que in range(3):
             filling = situations[f"Que{que}"]['Info']
             self.__queBar.paint(surface, pointGet(f"Que{que}M"), filling)
+            
+        # If we are busted we draw the cross
+        if 'QueBusted' in situations:
+            bustedQue = situations['QueBusted']['Info']
+            Pos.PositionManager.PaintSprite(surface, self.__cross, pointGet(f"Que{bustedQue}M"))
             
     
         

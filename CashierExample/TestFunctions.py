@@ -11,13 +11,33 @@ import Framework.GlobalFunctions as Global
 import CashierExample.CashierPainter as Painter
 
 
-         
-Global.PerformTraining("TestModel", CashierSimulator.CashierSimulator,sizeOfMacroBatch=20_000, 
-                         evaluationRuns=100, macroBatches=5, numOfParallelEnvs = 2,
+
+
+
+
+
+
+Global.PerformTraining("SmartModel", CashierSimulator.CashierSimulator,
+                       optionalArgs={'usesAutoDispatcher': False},
+                        sizeOfMacroBatch=20_000, 
+                         evaluationRuns=100, macroBatches=30, numOfParallelEnvs = 2,
                         additionalPPOargs = {'gamma' : 1.0, 'ent_coef' : 0.05})
 
 
 
-Global.GenerateMovie("TestMovie", "TestModel", CashierSimulator.CashierSimulator,  Painter.CashierPainter, 30, 5.0, 
-                     randomSeed=0 )
+Global.GenerateMovie("SmartMovie", "SmartModel",   CashierSimulator.CashierSimulator,  Painter.CashierPainter, 30, 5.0, 
+                     randomSeed=0, optionalArgsGym={'usesAutoDispatcher': False} )
+
+
+         
+Global.PerformTraining("AutoModel", CashierSimulator.CashierSimulator,
+                       optionalArgs={'usesAutoDispatcher': True},
+                        sizeOfMacroBatch=20_000, 
+                         evaluationRuns=100, macroBatches=30, numOfParallelEnvs = 2,
+                        additionalPPOargs = {'gamma' : 1.0, 'ent_coef' : 0.05})
+
+
+
+Global.GenerateMovie("AutoMovie", "AutoModel",   CashierSimulator.CashierSimulator,  Painter.CashierPainter, 30, 5.0, 
+                     randomSeed=0, optionalArgsGym={'usesAutoDispatcher': True} )
 
