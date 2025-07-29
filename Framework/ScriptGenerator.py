@@ -9,7 +9,7 @@ import copy
 
 class ScriptGenerator:
     
-    def __init__(self, simpyEnv = None, logList=[]):
+    def __init__(self, simpyEnv = None, logList = None):
         '''
         Initializes the script generator.
 
@@ -27,10 +27,15 @@ class ScriptGenerator:
         '''
         self.__env = simpyEnv
         '''The simpy environment to ask for the current time'''
-        self.__logList = logList
+        if logList == None:
+            self.__logList = []
+        else:
+            self.__logList = logList
         '''The list with all the log entries from the script'''
+        
         self.__openEntries = {}
         '''The dictionary that contains the association between actor and the opened entry'''
+        
 
     
     
@@ -53,6 +58,7 @@ class ScriptGenerator:
         '''
         
         currentTime = self.__env.now
+        
         if actor in self.__openEntries:
             self.__openEntries[actor]['End'] = currentTime
             

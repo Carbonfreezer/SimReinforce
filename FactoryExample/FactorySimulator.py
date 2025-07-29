@@ -306,7 +306,7 @@ class FactorySimulator:
         
         
         if self.__generatesMovie:
-            self.__movie = Movie.ScriptGenerator(simPyEnv)
+            self.__movie = Movie.ScriptGenerator(simpyEnv = simPyEnv)
             self.__movie.AddAction( 'DA', 0)
             self.__movie.AddAction( 'DB', 0)
             self.__movie.AddAction( 'A0', {'State': 'Working' , 'Station' : 0})

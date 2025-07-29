@@ -22,17 +22,16 @@ from Framework.Simulation import WaitingModule
 class CashierSimulator:
     
     MaxFillingCashLines = 10
-    MeanArrivalTimeCustomer = 3
     # All the following values are gamma distributed with mean and std deviation gicen
-    TimeToDispatch = (1.5, 0.5)
+    TimeBetweenCustomers = (2.0, 1.0)
     TravelTime = (2.0, 1.0)
     WorkingSlow = (7.0, 2.0)
     WorkingFast = (4.0, 1.0)
-    LeavingTime = (1.0, 0.2)
+    LeavingTime = (3.0, 0.5)
     
     MaxTime = 300
     FailureReward = -1.0
-    CustomerReward = 0.001
+    CustomerReward = 0.01
     
     
     '''Contains the transfer times from yource to destination station'''
@@ -145,8 +144,6 @@ class CashierSimulator:
                 # 3: Beeing at cash 1,2,3 :  3 Transition to cash 1,2,3
                 'Slow' : gym.spaces.Discrete(6),
                 'Fast' : gym.spaces.Discrete(6),
-                # Dispacther situation, 0: No customer processing, 1 -3 : customer send to line 0,1,2
-                'Dispatch' : gym.spaces.Discrete(4),
                 'Time' : gym.spaces.Box(0.0, 1.0, shape=(1,), dtype =np.float32)
                 }
     
@@ -172,8 +169,6 @@ class CashierSimulator:
                         (3 if self.__cashierCurrentlyInTransfer[1] else 0),        
                         
                             
-                # Dispacther situation, 0: No customer processing, 1 -3 : customer send to line 0,1,2
-                'Dispatch' : self.__dispatcherState,
                 'Time' :  [np.clip(self.__env.now / CashierSimulator.MaxTime, 0.0, 1.0)]
                 }
     
@@ -196,22 +191,22 @@ class CashierSimulator:
         self.__reward = 0.0
         self.__env = simPyEnv
         self.__accumulatedCustomers = 0
-       
+        self.__customerIndexCounter = 0
         
         self.__waiting = WaitingModule.WaitingModule(simPyEnv, randGen)
         '''The module that can do random waiting'''
         
         
         if self.__generatesMovie:
-            self.__movie = Movie.ScriptGenerator(simPyEnv)
+            self.__movie = Movie.ScriptGenerator(simpyEnv = simPyEnv)
             # First the ques.
             self.__movie.AddAction('Que0', 0)
             self.__movie.AddAction('Que1', 0)
             self.__movie.AddAction('Que2', 0)
             
             # The actions of the different cashiers.
-            self.__move.AddAction('CashSlow', {'State' : 'Working', 'Station' : 0})
-            self.__move.AddAction('CashFast', {'State' : 'Working', 'Station' : 1})
+            self.__movie.AddAction('CashSlow', {'State' : 'Working', 'Station' : 0})
+            self.__movie.AddAction('CashFast', {'State' : 'Working', 'Station' : 1})
             
             
             # Customers served.
@@ -229,7 +224,6 @@ class CashierSimulator:
                               simpy.Container(simPyEnv, capacity = CashierSimulator.MaxFillingCashLines)
                              ] 
         
-        self.__customerArrivalContainer = simpy.Container(simPyEnv, capacity = 4)
         
         
         '''The container used for the customer arrival process.'''
@@ -238,30 +232,11 @@ class CashierSimulator:
         '''Contains the information if the station is currently overruned'''
         self.__queOverrun = False
         '''Flags if any of the three quees is overrrun'''
-        self.__dispatcherState = 0
-        '''0: Currently waiting for customers to arrive, 1-3 disptaching to line 1-3.'''
         
-        # The spawner that generates the customers.
-        self.__env.process(self.__customerSpawner())
-        
-        self.__initialDispatcher = True
-        '''Flags that this is an iniital dispatcher call. Because the dispatcher may get called, when they are 
-        no customers waiting yet.'''
-        
-    
-    
-    def __customerSpawner(self):
-        '''
-        The endless customer spawner
 
-        Yields
-        -------
-            Waiting events.
-
-        '''
-        while True:
-            yield self.__waiting.WaitExponential(CashierSimulator.MeanArrivalTimeCustomer)
-            yield self.__customerArrivalContainer.put(1)    
+       
+        
+       
       
     
     def PrepareAction(self, actorChosen, localAction):
@@ -311,22 +286,14 @@ class CashierSimulator:
 
         '''
         
-        # If this is the first call we pick the first customer and then 
-        # wait for the next command to decide on what to do with him.
-        if self.__initialDispatcher:
-            yield self.__customerArrivalContainer.get(1)
-            self.__initialDispatcher = False
-            return
-
-
+      
         self.__dispatcherState = localAction + 1
         # Where dis the last dipatch happen?
         if self.__generatesMovie:
             self.__movie.AddAction('LastDispatch', localAction)
-            self.__movie.AddAction('CustArrive', localAction)
         
             
-        yield self.__waiting.WaitGamma(CashierSimulator.TimeToDispatch)
+        yield self.__waiting.WaitGamma(CashierSimulator.TimeBetweenCustomers)
         
         
         # Check if our destination que is full and we fail.
@@ -340,10 +307,8 @@ class CashierSimulator:
         
         # Arrival is finished.
         if self.__generatesMovie:
-            self.__movie.CloseAction('CustArrive')
+            self.__movie.AddAction(f"Que{localAction}", self.__customerQue[localAction].level)
             
-        # Now we wait for the next customer to be picked up.
-        yield self.__customerArrivalContainer.get(1)
         
     
         
@@ -363,7 +328,10 @@ class CashierSimulator:
         '''
         
         yield self.__waiting.WaitGamma(CashierSimulator.LeavingTime)
-        self.__movie.CloseAction(custActor)
+        self.__accumulatedCustomers += 1
+        if self.__generatesMovie:
+            self.__movie.AddAction( 'Custs', self.__accumulatedCustomers)
+            self.__movie.CloseAction(custActor)
         
         
     def __handleCashier(self, isSlowCashier, localAction):
@@ -397,6 +365,7 @@ class CashierSimulator:
             
             if self.__generatesMovie:
                 self.__movie.AddAction(actor, {'State' : 'Working', 'Station' : currentStation})
+                self.__movie.AddAction(f"Que{currentStation}", self.__customerQue[currentStation].level)
                 
            
             yield self.__waiting.WaitGamma(CashierSimulator.WorkingSlow if isSlowCashier else 
@@ -407,16 +376,14 @@ class CashierSimulator:
            
             # Get a small reward for  the customer.
             self.__reward += CashierSimulator.CustomerReward
-            self.__accumulatedCustomers += 1
-            if self.__generatesMovie:
-                self.__movie.AddAction( 'Custs', self.__accumulatedCustomers)
+            self.__customerIndexCounter += 1
             
-                
+            custActor = f"LeavingCust{self.__customerIndexCounter}"
             # Here we spawn a leaving customer.
             if self.__generatesMovie:
-                custActor = f"LeavingCust{self.__accumulatedCustomers}"
-                self.__movie.AddAction(custActor, None)
-                self.__env.process(self.__TerminateLeavingCustomer(custActor))
+                self.__movie.AddAction(custActor, currentStation)
+            
+            self.__env.process(self.__TerminateLeavingCustomer(custActor))
         else:
             # In this case we want to transfer to a station.
             destination = localAction - 1

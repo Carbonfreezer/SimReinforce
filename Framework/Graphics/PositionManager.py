@@ -120,12 +120,11 @@ class PositionManager:
         
         delta = orientationPoint - drawingPoint
         angle = np.arctan2(delta[1], delta[0])
-        angle = np.rad2deg(angle)
-        
-        rect = source.get_rect()
-        targetPoint = drawingPoint - [rect.width * 0.5, rect.height * 0.5]
+        angle = - np.rad2deg(angle)
         
         finalImage = pg.transform.rotate(source, angle)
+        rect = finalImage.get_rect()
+        targetPoint = drawingPoint - [rect.width * 0.5, rect.height * 0.5]
         destination.blit(finalImage, targetPoint)
         
     
