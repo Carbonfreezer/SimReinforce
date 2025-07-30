@@ -32,8 +32,13 @@ gamma distribution specified by the mean and standard deviation. The example con
 The AI can control the dispatcher:
 
 
+https://github.com/user-attachments/assets/56112eb2-cc45-4546-810a-04e846797874
+
 
 Or it can be in automatic mode, where it dispatches customers in cycles to the dispatching lines:
+
+
+https://github.com/user-attachments/assets/57050cf7-7fbe-4e9d-8430-057944b6f3f4
 
 
 ### System architecture
