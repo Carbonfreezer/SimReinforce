@@ -19,7 +19,7 @@ import numpy as np
 
 from Framework.Simulation import WaitingModule
 
-class CashierSimulator:
+class Simulator:
     
     MaxFillingCashLines = 10
     # All the following values are gamma distributed with mean and std deviation gicen
@@ -85,7 +85,7 @@ class CashierSimulator:
             True if over here we either have the time managed or a que is overrun.
 
         '''
-        return self.__env.now > CashierSimulator.MaxTime or self.__queOverrun
+        return self.__env.now > Simulator.MaxTime or self.__queOverrun
     
     @property
     def TimeOut(self):
@@ -141,9 +141,9 @@ class CashierSimulator:
             The observation space.
 
         '''
-        return {'Line A': gym.spaces.Discrete(CashierSimulator.MaxFillingCashLines + 1),
-                'Line B': gym.spaces.Discrete(CashierSimulator.MaxFillingCashLines + 1),
-                'Line C': gym.spaces.Discrete(CashierSimulator.MaxFillingCashLines + 1),
+        return {'Line A': gym.spaces.Discrete(Simulator.MaxFillingCashLines + 1),
+                'Line B': gym.spaces.Discrete(Simulator.MaxFillingCashLines + 1),
+                'Line C': gym.spaces.Discrete(Simulator.MaxFillingCashLines + 1),
                 # 3: Beeing at cash 1,2,3 :  3 Transition to cash 1,2,3
                 'Slow' : gym.spaces.Discrete(6),
                 'Fast' : gym.spaces.Discrete(6),
@@ -172,7 +172,7 @@ class CashierSimulator:
                         (3 if self.__cashierCurrentlyInTransfer[1] else 0),        
                         
                             
-                'Time' :  [np.clip(self.__env.now / CashierSimulator.MaxTime, 0.0, 1.0)]
+                'Time' :  [np.clip(self.__env.now / Simulator.MaxTime, 0.0, 1.0)]
                 }
     
     
@@ -225,9 +225,9 @@ class CashierSimulator:
         '''Flags if the cashier is currently moving'''
         self.__cashierAtOrGoingToStation = [0, 1]
         '''Flags where cahsier currently is or is going to.'''
-        self.__customerQue = [simpy.Container(simPyEnv, capacity = CashierSimulator.MaxFillingCashLines),
-                              simpy.Container(simPyEnv, capacity = CashierSimulator.MaxFillingCashLines),
-                              simpy.Container(simPyEnv, capacity = CashierSimulator.MaxFillingCashLines)
+        self.__customerQue = [simpy.Container(simPyEnv, capacity = Simulator.MaxFillingCashLines),
+                              simpy.Container(simPyEnv, capacity = Simulator.MaxFillingCashLines),
+                              simpy.Container(simPyEnv, capacity = Simulator.MaxFillingCashLines)
                              ] 
         
         
@@ -314,13 +314,13 @@ class CashierSimulator:
             self.__movie.AddAction('LastDispatch', localAction)
         
             
-        yield self.__waiting.WaitGamma(CashierSimulator.TimeBetweenCustomers)
+        yield self.__waiting.WaitGamma(Simulator.TimeBetweenCustomers)
         
         
         # Check if our destination que is full and we fail.
-        if self.__customerQue[localAction].level == CashierSimulator.MaxFillingCashLines:
+        if self.__customerQue[localAction].level == Simulator.MaxFillingCashLines:
             self.__queOverrun = True
-            self.__reward += CashierSimulator.FailureReward
+            self.__reward += Simulator.FailureReward
             if self.__generatesMovie:
                 self.__movie.AddAction('QueBusted', localAction)
             return
@@ -350,7 +350,7 @@ class CashierSimulator:
 
         '''
         
-        yield self.__waiting.WaitGamma(CashierSimulator.LeavingTime)
+        yield self.__waiting.WaitGamma(Simulator.LeavingTime)
         self.__accumulatedCustomers += 1
         if self.__generatesMovie:
             self.__movie.AddAction( 'Custs', self.__accumulatedCustomers)
@@ -391,14 +391,14 @@ class CashierSimulator:
                 self.__movie.AddAction(f"Que{currentStation}", self.__customerQue[currentStation].level)
                 
            
-            yield self.__waiting.WaitGamma(CashierSimulator.WorkingSlow if isSlowCashier else 
-                                     CashierSimulator.WorkingFast)
+            yield self.__waiting.WaitGamma(Simulator.WorkingSlow if isSlowCashier else 
+                                     Simulator.WorkingFast)
            
             if self.__generatesMovie:
                 self.__movie.AddAction(actor, {'State' : 'Stalled', 'Station' : currentStation})
            
             # Get a small reward for  the customer.
-            self.__reward += CashierSimulator.CustomerReward
+            self.__reward += Simulator.CustomerReward
             self.__customerIndexCounter += 1
             
             custActor = f"LeavingCust{self.__customerIndexCounter}"
@@ -421,7 +421,7 @@ class CashierSimulator:
                                        'Station' : currentStation,
                                        'Destination' : destination})
                 
-            yield self.__waiting.WaitGamma(CashierSimulator.TravelTime)
+            yield self.__waiting.WaitGamma(Simulator.TravelTime)
             
             
     

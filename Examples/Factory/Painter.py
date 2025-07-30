@@ -10,7 +10,7 @@ import Framework.Graphics.PositionManager as Pos
 import Framework.Graphics.DiscreetBar as Discreet
 import Framework.Graphics.ContinuousBar as Continuos
 
-class FactoryPainter:
+class Painter:
     
     def __init__(self):
         '''
