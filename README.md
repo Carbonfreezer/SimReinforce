@@ -71,7 +71,7 @@ auto mode -0.23.
 - moviepy
 
 ## General Strategy
-The objective is to create a gym with multiple actors controlled via Maskable PPO from stable baselines, running in a simple environment. 
+The objective is to create a gym with multiple actors controlled via Maskable PPO from stable baselines, running in a Simpy environment. 
 Simpy is a discreet event simulator. As a next step, we want to create a continuous video from it, as shown in the example above.
 
 The first problem is that OpenAI Gym only supports a single actor. We solve this by adding the actor index for which we want a decision to the observation space. 
@@ -96,7 +96,7 @@ The best way to get started is to look at the Python files in the **FactoryExamp
  is the plugin that is responsible for rendering a specific situation. If you want to program your application, create a new subfolder and implement these classes as well. Take a look at the public properties and methods. You also need to implement them. The link between the simulation and the rendering is the log
  for the script generator. The best approach is to consider the changes in your simulation. These things become specific to a particular actor and are defined in the reset function of your plugin. Whenever these objects change, you can log the required information with the **AddAction** command. How these objects get visualized later on is handled in the painter module. 
 
-If you are used to OpenAI gyms, what may be a bit confusing here is that the system controls several actors. What corresponds to the step function is the combination of **PrepareAction** and **PerformAction**. These functions are actor-specific. PerformAction is the actual process. Several processes may run concurrently. To ensure that two actions do not collide, such as two persons walking to the same position, you must do this in the PrepareAction method. Also, as several things may happen at the same time, the reward for several actions may be accumulated, as you can also see in the example. They get retrieved and reset by the **GetAndResetReward** function.
+If you are used to OpenAI gyms, what may be a bit confusing here is that the system controls several actors. What corresponds to the step function is the combination of **PrepareAction** and **PerformAction**. These functions are actor-specific. PerformAction is the actual process. Several processes may run concurrently. To prevent collisions between actions, such as two persons walking to the same position, you must implement this in the PrepareAction method. Also, as several things may happen at the same time, the reward for several actions may be accumulated, as you can also see in the example. They get retrieved and reset by the **GetAndResetReward** function.
 Action masking is also done actor-specific by the **actions_masks** function.
 
 
