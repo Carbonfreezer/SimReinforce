@@ -58,7 +58,7 @@ the cashiers are not moving around, and the dispatcher solely does load balancin
 mode, mainly the fast cashier tries to service two lines. 
 
 The obtained mean reward for intelligent mode, where the AI controls the dispatcher, was 0.33, and for the 
-auto mode 0.23.  
+auto mode -0.23.  
 
 
 ## Used python modules
