@@ -9,6 +9,7 @@ import pygame as pg
 import Framework.Graphics.PositionManager as Pos
 import Framework.Graphics.DiscreetBar as Discreet
 import Framework.Graphics.ContinuousBar as Continuos
+import Framework.Graphics.SpriteHelper as Sprite
 
 class Painter:
     
@@ -127,26 +128,26 @@ class Painter:
             if actorInfo['State'] == 'Working':
                 drawingPoint = self.__pointCollection.GetPoint(f"Stat{actorInfo['Station']}")
                 drawingSprite = self.__working[act]
-                Pos.PositionManager.PaintSprite(surface, drawingSprite, drawingPoint)
+                Sprite.PaintSprite(surface, drawingSprite, drawingPoint)
                 # Now we draw the parcel.
                 drawingPoint = Pos.PositionManager.GetInterpolatedPosition(self.__objectPathes[actorInfo['Station']], actorInterpol)
-                Pos.PositionManager.PaintSprite(surface, self.__objectImage, drawingPoint)
+                Sprite.PaintSprite(surface, self.__objectImage, drawingPoint)
             elif actorInfo['State'] == 'Stalled':
                 drawingPoint = self.__pointCollection.GetPoint(f"Stat{actorInfo['Station']}")
                 drawingSprite = self.__stalled[act]
-                Pos.PositionManager.PaintSprite(surface, drawingSprite, drawingPoint)
+                Sprite.PaintSprite(surface, drawingSprite, drawingPoint)
             else:
                travelPath = self.__workerPathes[(actorInfo['Station'], 
                                                  actorInfo['Destination'])]
                drawingPoint = Pos.PositionManager.GetInterpolatedPosition(travelPath, actorInterpol)
                drawingSprite = self.__travelling[act]
-               Pos.PositionManager.PaintSprite(surface, drawingSprite, drawingPoint)
+               Sprite.PaintSprite(surface, drawingSprite, drawingPoint)
                
                
         # The bottom bar
         numItems = situations['Objs']['Info']
         img = self.__font.render(f"{numItems}", True, pg.Color(255,255,255))
-        Pos.PositionManager.PaintSprite(surface, img, self.__pointCollection.GetPoint("ObjT"))
+        Sprite.PaintSprite(surface, img, self.__pointCollection.GetPoint("ObjT"))
         time = situations['Time']['Progress']
         self.__timePaint.paint(surface,  self.__pointCollection.GetPoint('Bar'),  1.0 - time)
         

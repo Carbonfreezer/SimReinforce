@@ -19,7 +19,7 @@ from Examples.Cashier import Painter
 Global.PerformTraining("SmartModel", Simulator.Simulator,
                        optionalArgs={'usesAutoDispatcher': False},
                         sizeOfMacroBatch=20_000, 
-                         evaluationRuns=1000, macroBatches=1, numOfParallelEnvs = 2
+                         evaluationRuns=1000, macroBatches=30, numOfParallelEnvs = 2
                         )
 
 

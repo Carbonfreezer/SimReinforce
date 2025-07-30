@@ -34,7 +34,6 @@ class FrameworkGym(gym.Env):
         
         self.__plugin = generator(generateMovieScript, **additionalOptions)
         self.__numActors =  len(  self.__plugin.ActionArray)
-        self.__generateMovieScript = generateMovieScript
         baseObservationSpace =  self.__plugin.GetObservationSpace()
         # We add the actor who is going to act next as observation.
         baseObservationSpace['Actor'] = gym.spaces.Discrete(self.__numActors)
@@ -150,7 +149,7 @@ class FrameworkGym(gym.Env):
         observation = self.__get_obs()
         isTerminated = self.__plugin.Terminated or wasTimeOut
         infoDir = {}
-        if isTerminated and self.__generateMovieScript:
+        if isTerminated:
             infoDir['Script'] = self.__plugin.MovieScript.CloseAllEntriesAndGetLogList()
         return observation, reward, isTerminated, False, infoDir
 

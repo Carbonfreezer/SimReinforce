@@ -9,6 +9,7 @@ import pygame as pg
 import Framework.Graphics.PositionManager as Pos
 import Framework.Graphics.DiscreetBar as Discreet
 import Framework.Graphics.ContinuousBar as Continuos
+import Framework.Graphics.SpriteHelper as Sprite
 
 class Painter:
     
@@ -176,7 +177,7 @@ class Painter:
         # If we are busted we draw the cross
         if 'QueBusted' in situations:
             bustedQue = situations['QueBusted']['Info']
-            Pos.PositionManager.PaintSprite(surface, self.__cross, pointGet(f"Que{bustedQue}M"))
+            Sprite.PaintSprite(surface, self.__cross, pointGet(f"Que{bustedQue}M"))
             
     
         
@@ -186,18 +187,18 @@ class Painter:
             path = situations[cust]
             drawingPoint = Pos.PositionManager.GetInterpolatedPosition(self.__exitPathes[path['Info']], 
                                                                        path['Progress'])
-            Pos.PositionManager.PaintSprite(surface, self.__custImage, drawingPoint)
+            Sprite.PaintSprite(surface, self.__custImage, drawingPoint)
             
         # Now we draw the dispatcher.
         if 'LastDispatch' in situations:
             orientation = situations['LastDispatch']['Info']
             sourcePoint = pointGet("Dispatcher")
             destinationPoint = pointGet(f"Que{orientation}S")
-            Pos.PositionManager.PaintSpritePointing(surface, self.__arrow, sourcePoint, destinationPoint)
+            Sprite.PaintSpritePointing(surface, self.__arrow, sourcePoint, destinationPoint)
             # Get the customer painted.
             drawingPoint = Pos.PositionManager.GetInterpolatedPosition(self.__entrancePathes[orientation], 
                                                                        situations['LastDispatch']['Progress'])
-            Pos.PositionManager.PaintSprite(surface, self.__custImage, drawingPoint)
+            Sprite.PaintSprite(surface, self.__custImage, drawingPoint)
         
         # Now the cashiers.
         for index, element in enumerate([situations["CashSlow"], situations["CashFast"]]):
@@ -206,24 +207,24 @@ class Painter:
               que = info['Station']
               match info['State']:
                   case 'Stalled':
-                      Pos.PositionManager.PaintSprite(surface, imageArray['Stalled'], 
+                      Sprite.PaintSprite(surface, imageArray['Stalled'], 
                                                       pointGet(f"Place{que}"))
                   case 'Walking':
                       animationPath = self.__cashierPathes[(que, info['Destination'])]
                       pos =  Pos.PositionManager.GetInterpolatedPosition(animationPath, 
                                                                          element['Progress'])
-                      Pos.PositionManager.PaintSprite(surface, imageArray['Walking'], pos)
+                      Sprite.PaintSprite(surface, imageArray['Walking'], pos)
                   case 'Working':
-                      Pos.PositionManager.PaintSprite(surface, imageArray['Working'], 
+                      Sprite.PaintSprite(surface, imageArray['Working'], 
                                                       pointGet(f"Place{que}"))
                       custPos = Pos.PositionManager.GetInterpolatedPosition(self.__custCash[que], 
                                                                             element['Progress'])
-                      Pos.PositionManager.PaintSprite(surface, self.__custImage, custPos)
+                      Sprite.PaintSprite(surface, self.__custImage, custPos)
                
         # The bottom bar
         numCustomers = situations['Custs']['Info']
         img = self.__font.render(f"{numCustomers}", True, pg.Color(255,255,255))
-        Pos.PositionManager.PaintSprite(surface, img, pointGet("ItemText"))
+        Sprite.PaintSprite(surface, img, pointGet("ItemText"))
         time = situations['Time']['Progress']
         self.__timePaint.paint(surface,  pointGet("Time"),  1.0 - time)
         

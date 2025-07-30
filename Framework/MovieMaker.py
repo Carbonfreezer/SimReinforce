@@ -7,7 +7,7 @@ Created on Fri Jul 25 12:58:52 2025
 
 
 import pygame as pg
-import Framework.ScriptGenerator as ScriptGenerator
+from  Framework import ScriptPlayer
 
 import moviepy.video.VideoClip as Video
 import moviepy.video.compositing as comp
@@ -95,7 +95,7 @@ class MovieMaker:
         None.
 
         '''
-        self.__script = ScriptGenerator.ScriptGenerator(logList=logList)
+        self.__script = ScriptPlayer.ScriptPlayer(logList=logList)
         self.__drawingSurface = pg.Surface(self.__painter.ImageSize)
         deltaTime = timeScale / fps
         amounOfFrames = int(self.__script.MaxTime / deltaTime)

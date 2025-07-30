@@ -14,7 +14,7 @@ Created on Wed Jul 23 14:08:55 2025
 
 import gymnasium as gym
 import simpy
-import Framework.ScriptGenerator as Movie
+from Framework import ScriptRecorder
 import numpy as np
 
 from Framework.Simulation import WaitingModule
@@ -127,7 +127,6 @@ class Simulator:
 
         '''
         
-        assert self.__generatesMovie, "We must be in movie generation mode."
         return self.__movie
     
     
@@ -203,22 +202,21 @@ class Simulator:
         '''The module that can do random waiting'''
         
         
-        if self.__generatesMovie:
-            self.__movie = Movie.ScriptGenerator(simpyEnv = simPyEnv)
-            # First the ques.
-            self.__movie.AddAction('Que0', 0)
-            self.__movie.AddAction('Que1', 0)
-            self.__movie.AddAction('Que2', 0)
-            
-            # The actions of the different cashiers.
-            self.__movie.AddAction('CashSlow', {'State' : 'Working', 'Station' : 0})
-            self.__movie.AddAction('CashFast', {'State' : 'Working', 'Station' : 1})
-            
-            
-            # Customers served.
-            self.__movie.AddAction( 'Custs', 0)
-            self.__movie.AddAction( 'Time', None)
+        self.__movie = ScriptRecorder.ScriptRecorder( simPyEnv, self.__generatesMovie)
+        # First the ques.
+        self.__movie.AddAction('Que0', 0)
+        self.__movie.AddAction('Que1', 0)
+        self.__movie.AddAction('Que2', 0)
         
+        # The actions of the different cashiers.
+        self.__movie.AddAction('CashSlow', {'State' : 'Working', 'Station' : 0})
+        self.__movie.AddAction('CashFast', {'State' : 'Working', 'Station' : 1})
+        
+        
+        # Customers served.
+        self.__movie.AddAction( 'Custs', 0)
+        self.__movie.AddAction( 'Time', None)
+    
         
         
         self.__cashierCurrentlyInTransfer = [False, False]
@@ -310,8 +308,7 @@ class Simulator:
         
       
         # Where dis the last dipatch happen?
-        if self.__generatesMovie:
-            self.__movie.AddAction('LastDispatch', localAction)
+        self.__movie.AddAction('LastDispatch', localAction)
         
             
         yield self.__waiting.WaitGamma(Simulator.TimeBetweenCustomers)
@@ -321,16 +318,14 @@ class Simulator:
         if self.__customerQue[localAction].level == Simulator.MaxFillingCashLines:
             self.__queOverrun = True
             self.__reward += Simulator.FailureReward
-            if self.__generatesMovie:
-                self.__movie.AddAction('QueBusted', localAction)
+            self.__movie.AddAction('QueBusted', localAction)
             return
         
         # Now we can disptach the customer.
         yield self.__customerQue[localAction].put(1)
         
         # Arrival is finished.
-        if self.__generatesMovie:
-            self.__movie.AddAction(f"Que{localAction}", self.__customerQue[localAction].level)
+        self.__movie.AddAction(f"Que{localAction}", self.__customerQue[localAction].level)
             
         
     
@@ -352,9 +347,8 @@ class Simulator:
         
         yield self.__waiting.WaitGamma(Simulator.LeavingTime)
         self.__accumulatedCustomers += 1
-        if self.__generatesMovie:
-            self.__movie.AddAction( 'Custs', self.__accumulatedCustomers)
-            self.__movie.CloseAction(custActor)
+        self.__movie.AddAction( 'Custs', self.__accumulatedCustomers)
+        self.__movie.CloseAction(custActor)
         
         
     def __handleCashier(self, isSlowCashier, localAction):
@@ -380,22 +374,15 @@ class Simulator:
         self.__cashierCurrentlyInTransfer[localIndex] =  False
         if localAction == 0:
             # In this case we are working.
-            if self.__generatesMovie:
-                self.__movie.AddAction(actor, {'State' : 'Stalled', 'Station' : currentStation})
-            
+            self.__movie.AddAction(actor, {'State' : 'Stalled', 'Station' : currentStation})
             # Get one customer.
             yield self.__customerQue[currentStation].get(1)
-            
-            if self.__generatesMovie:
-                self.__movie.AddAction(actor, {'State' : 'Working', 'Station' : currentStation})
-                self.__movie.AddAction(f"Que{currentStation}", self.__customerQue[currentStation].level)
-                
+            self.__movie.AddAction(actor, {'State' : 'Working', 'Station' : currentStation})
+            self.__movie.AddAction(f"Que{currentStation}", self.__customerQue[currentStation].level)
            
             yield self.__waiting.WaitGamma(Simulator.WorkingSlow if isSlowCashier else 
                                      Simulator.WorkingFast)
-           
-            if self.__generatesMovie:
-                self.__movie.AddAction(actor, {'State' : 'Stalled', 'Station' : currentStation})
+            self.__movie.AddAction(actor, {'State' : 'Stalled', 'Station' : currentStation})
            
             # Get a small reward for  the customer.
             self.__reward += Simulator.CustomerReward
@@ -403,9 +390,7 @@ class Simulator:
             
             custActor = f"LeavingCust{self.__customerIndexCounter}"
             # Here we spawn a leaving customer.
-            if self.__generatesMovie:
-                self.__movie.AddAction(custActor, currentStation)
-            
+            self.__movie.AddAction(custActor, currentStation)
             self.__env.process(self.__TerminateLeavingCustomer(custActor))
         else:
             # In this case we want to transfer to a station.
@@ -415,12 +400,11 @@ class Simulator:
             self.__cashierCurrentlyInTransfer[localIndex] = True
             
             self.__cashierAtOrGoingToStation[localIndex] = destination
-            if self.__generatesMovie:
-                self.__movie.AddAction( actor, 
-                                      {'State': 'Walking' , 
-                                       'Station' : currentStation,
-                                       'Destination' : destination})
-                
+            self.__movie.AddAction( actor, 
+                                  {'State': 'Walking' , 
+                                   'Station' : currentStation,
+                                   'Destination' : destination})
+            
             yield self.__waiting.WaitGamma(Simulator.TravelTime)
             
             

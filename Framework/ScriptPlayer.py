@@ -1,110 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jul 24 15:19:33 2025
+Created on Wed Jul 30 09:15:10 2025
 
 @author: Luerig
 """
 
-class ScriptGenerator:
-    
-    def __init__(self, simpyEnv = None, logList = None):
+class ScriptPlayer:
+    def __init__(self, logList):
         '''
-        Initializes the script generator.
+        Creates the scipt player from the indicated loglist.
 
         Parameters
         ----------
-        simpyEnv :  , optional
-            The simpy environment. This is a must when generating the log in simulation. The default is None.
-        logList :  , optional
-            This is the list with the log entries. This entry is only used when the video gets generated. The default is [].
+        logList : 
+            log list to create player from.
 
         Returns
         -------
         None.
 
         '''
-        self.__env = simpyEnv
-        '''The simpy environment to ask for the current time'''
-        if logList == None:
-            self.__logList = []
-        else:
-            self.__logList = logList
-        '''The list with all the log entries from the script'''
+        self.__logList = logList
         
-        self.__openEntries = {}
-        '''The dictionary that contains the association between actor and the opened entry'''
-        
-
-    
-    
-    def AddAction(self,  actor, stateInformation):
-        '''
-        Adds a new action to the log entry
-
-        Parameters
-        ----------
-        actor :  
-            The actor who does it.
-        stateInformation :  
-            Information concerning the state of the actor.
-            This may be some arbitrary information.
-
-        Returns
-        -------
-        None.
-
-        '''
-        
-        currentTime = self.__env.now
-        
-        if actor in self.__openEntries:
-            self.__openEntries[actor]['End'] = currentTime
-            
-        newLog = {'Start' : currentTime, 'Actor' : actor, 'Info' : stateInformation}
-        self.__logList.append(newLog)
-        self.__openEntries[actor] = newLog
-        
-        
-    def CloseAction(self, actor):
-        '''
-        Closes an action.
-
-        Parameters
-        ----------
-        actor : 
-            The actor whose current action should terminate.
-
-        Returns
-        -------
-        None.
-
-        '''
-        self.__openEntries[actor]['End'] = self.__env.now
-        del self.__openEntries[actor]
-        
-        
-    def CloseAllEntriesAndGetLogList(self):
-        '''
-        Closes all entries from all actors. Usually done at the end of the simuation.
-        Returns the loglist.
-
-     
-        Returns
-        -------
-         
-            The loglist.
-
-
-        '''
-        
-        for entry in self.__openEntries.values():
-            entry['End'] =  self.__env.now
-        
-        self.__openEntries = {}
-        return  self.__logList
-        
-
-    
     def GetAllInterpolatedEntries(self, time):
         '''
         Asks the script for a specific log for a time in the script.
@@ -173,4 +90,5 @@ class ScriptGenerator:
 
         '''
         return max((x['End'] for x in self.__logList))
-        
+            
+       
