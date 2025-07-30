@@ -31,14 +31,22 @@ This example demonstrates a chashier situation. This example is stochastic. All 
 gamma distribution specified by the mean and standard deviation. The example contains two cashiers and a dispatcher.
 The AI can control the dispatcher and cashier:
 
-https://github.com/user-attachments/assets/56112eb2-cc45-4546-810a-04e846797874
+
+
+
+
+https://github.com/user-attachments/assets/d0c1f168-c139-466a-9e16-39ed5fb28a65
 
 
 
 Or it can be in automatic mode, where it dispatches customers in cycles to the dispatching lines, and only cashiers are controlled by the AI:
 
 
-https://github.com/user-attachments/assets/57050cf7-7fbe-4e9d-8430-057944b6f3f4
+
+
+https://github.com/user-attachments/assets/76c63028-760c-4d94-94ad-e9c9aefcb578
+
+
 
 
 ### System architecture
