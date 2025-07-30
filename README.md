@@ -29,13 +29,13 @@ If you train your model yourself, you should reach 28 items manufactured.
 ### Cashier Example
 This example demonstrates a chashier situation. This example is stochastic. All used working times use a 
 gamma distribution specified by the mean and standard deviation. The example contains two cashiers and a dispatcher.
-The AI can control the dispatcher:
+The AI can control the dispatcher and cashier:
 
 
 https://github.com/user-attachments/assets/56112eb2-cc45-4546-810a-04e846797874
 
 
-Or it can be in automatic mode, where it dispatches customers in cycles to the dispatching lines:
+Or it can be in automatic mode, where it dispatches customers in cycles to the dispatching lines, and only cashiers are controlled by the AI:
 
 
 https://github.com/user-attachments/assets/57050cf7-7fbe-4e9d-8430-057944b6f3f4
