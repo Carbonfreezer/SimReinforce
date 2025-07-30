@@ -75,17 +75,17 @@ class Simulator:
     
     
     @property
-    def Terminated(self):
+    def TerminationEvent(self):
         '''
-        Indicates, if the environment is terminated (meaning episode s over.)
+        Returns the termination event for the snvironment
 
         Returns
         -------
          
-            True if over here we either have the time managed or a que is overrun.
+            Termination event.
 
         '''
-        return self.__env.now > Simulator.MaxTime or self.__queOverrun
+        return self.__overrunEvent | self.__timeOutEvent
     
     @property
     def TimeOut(self):
@@ -233,10 +233,11 @@ class Simulator:
         '''The container used for the customer arrival process.'''
         '''Contains the filling of the customers ques.'''
         self.__stationOccupied = [True, True, False]
-        '''Contains the information if the station is currently overruned'''
-        self.__queOverrun = False
         '''Flags if any of the three quees is overrrun'''
         
+        self.__overrunEvent = simPyEnv.event()
+        self.__timeOutEvent = simPyEnv.timeout(Simulator.MaxTime)
+       
         if self.__usesAutoDispatcher:
             self.__env.process(self.__runAutoDispatcher())
         
@@ -316,10 +317,10 @@ class Simulator:
         
         # Check if our destination que is full and we fail.
         if self.__customerQue[localAction].level == Simulator.MaxFillingCashLines:
-            self.__queOverrun = True
+            self.__overrunEvent.succeed()
             self.__reward += Simulator.FailureReward
             self.__movie.AddAction('QueBusted', localAction)
-            return
+        
         
         # Now we can disptach the customer.
         yield self.__customerQue[localAction].put(1)

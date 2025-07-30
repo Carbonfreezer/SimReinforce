@@ -13,9 +13,6 @@ from Examples.Cashier import Painter
 
 
 
-
-
-
 Global.PerformTraining("SmartModel", Simulator.Simulator,
                        optionalArgs={'usesAutoDispatcher': False},
                         sizeOfMacroBatch=20_000, 

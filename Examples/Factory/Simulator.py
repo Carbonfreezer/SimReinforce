@@ -58,17 +58,17 @@ class Simulator:
     
     
     @property
-    def Terminated(self):
+    def TerminationEvent(self):
         '''
-        Indicates, if the environment is terminated (meaning episode s over.)
+        Returns the termination event for the snvironment
 
         Returns
         -------
          
-            True if over.
+            Termination event.
 
         '''
-        return self.__env.now > Simulator.MaxTime 
+        return self.__terminationEvent
     
     @property
     def TimeOut(self):
@@ -314,6 +314,8 @@ class Simulator:
         self.__stationOccupied = [True, True, False, False]
         '''Contains the information if the station is currently occupied'''
         
+        self.__terminationEvent = self.__env.timeout(Simulator.MaxTime)
+        '''When does the episode terminate '''
       
         
     def GetObservation(self):

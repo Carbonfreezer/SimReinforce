@@ -31,8 +31,8 @@ This example demonstrates a chashier situation. This example is stochastic. All 
 gamma distribution specified by the mean and standard deviation. The example contains two cashiers and a dispatcher.
 The AI can control the dispatcher and cashier:
 
-
 https://github.com/user-attachments/assets/56112eb2-cc45-4546-810a-04e846797874
+
 
 
 Or it can be in automatic mode, where it dispatches customers in cycles to the dispatching lines, and only cashiers are controlled by the AI:
@@ -57,8 +57,8 @@ Due to the stochastic nature, success is not guaranteed. When the AI controls th
 the cashiers are not moving around, and the dispatcher solely does load balancing. When the dispatcher is in auto
 mode, mainly the fast cashier tries to service two lines. 
 
-The obtained mean reward for intelligent mode, where the AI controls the dispatcher, was 0.33, and for the 
-auto mode -0.23.  
+The obtained mean reward for intelligent mode, where the AI controls the dispatcher, was 0.37, and for the 
+auto mode -0.18.  
 
 
 ## Used python modules
@@ -78,6 +78,7 @@ The first problem is that OpenAI Gym only supports a single actor. We solve this
 The action space we use is discrete and contains all possible actions for all actors. When an action of a specific actor is required, all other action options are masked out over the maskable 
 PPO algorithm. The specific decisions are then started as a simpy process. As several actors may wait for a new command simultaneously, we maintain a list of actors who are waiting for a command. 
 Once there are no more waiting actors, the simpy environment is run until at least one actor is finished. To prevent deadlocks, we also combine this with a timeout event to detect possible deadlock situations.
+Also the general termination of the gym is detected by a separate event, as this may happen during the action of one of the actors.
 This core concept is reflected in the **step** function of **FrameworkGym**.
 
 As a next step, we want to generate a Video from the simulation. The OpenAI gym already provides this option. Unfortunately, this generates a movie frame after every step call. As we have coupled the Gym with a discrete event simulator in simpy

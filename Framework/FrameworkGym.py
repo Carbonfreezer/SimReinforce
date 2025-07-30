@@ -136,18 +136,21 @@ class FrameworkGym(gym.Env):
         newEvent.associatedActor = currentActor
         self.__actorEvents.append(newEvent)
         wasTimeOut = False
+        pluginTerminated = False
         # Check if we have done all, if this is the case we have to run to get the next action.
         if not self.__actorsWaitingForCommand:
             deadLockGuard = self.__env.timeout(self.__plugin.TimeOut)
-            self.__env.run( deadLockGuard | AnyOf(self.__env, self.__actorEvents))
+            terminationEvent = self.__plugin.TerminationEvent
+            self.__env.run( terminationEvent | deadLockGuard | AnyOf(self.__env, self.__actorEvents))
             wasTimeOut = deadLockGuard.processed
+            pluginTerminated = terminationEvent.processed
             self.__actorsWaitingForCommand = [event.associatedActor for event in self.__actorEvents if event.processed]
             self.__actorEvents = [event for event in self.__actorEvents if not event.processed]
           
                     
         reward = self.__plugin.TimeOutPenalty if wasTimeOut else self.__plugin.GetAndResetReward()
         observation = self.__get_obs()
-        isTerminated = self.__plugin.Terminated or wasTimeOut
+        isTerminated = pluginTerminated or wasTimeOut
         infoDir = {}
         if isTerminated:
             infoDir['Script'] = self.__plugin.MovieScript.CloseAllEntriesAndGetLogList()
