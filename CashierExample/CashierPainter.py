@@ -14,7 +14,7 @@ class CashierPainter:
     
     def __init__(self):
         '''
-        The example factor painter initializes all, that is required to paint a given situation of the factory.
+        The example cashier painter initializes all, that is required to paint a given situation of the cashier.
 
         Returns
         -------

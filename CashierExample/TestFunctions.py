@@ -15,13 +15,11 @@ import CashierExample.CashierPainter as Painter
 
 
 
-
-
 Global.PerformTraining("SmartModel", CashierSimulator.CashierSimulator,
                        optionalArgs={'usesAutoDispatcher': False},
                         sizeOfMacroBatch=20_000, 
-                         evaluationRuns=100, macroBatches=30, numOfParallelEnvs = 2,
-                        additionalPPOargs = {'gamma' : 1.0, 'ent_coef' : 0.05})
+                         evaluationRuns=1000, macroBatches=30, numOfParallelEnvs = 2
+                        )
 
 
 
@@ -33,8 +31,8 @@ Global.GenerateMovie("SmartMovie", "SmartModel",   CashierSimulator.CashierSimul
 Global.PerformTraining("AutoModel", CashierSimulator.CashierSimulator,
                        optionalArgs={'usesAutoDispatcher': True},
                         sizeOfMacroBatch=20_000, 
-                         evaluationRuns=100, macroBatches=30, numOfParallelEnvs = 2,
-                        additionalPPOargs = {'gamma' : 1.0, 'ent_coef' : 0.05})
+                         evaluationRuns=1000, macroBatches=30, numOfParallelEnvs = 2
+                        )
 
 
 
