@@ -195,10 +195,11 @@ class Painter:
             sourcePoint = pointGet("Dispatcher")
             destinationPoint = pointGet(f"Que{orientation}S")
             Sprite.PaintSpritePointing(surface, self.__arrow, sourcePoint, destinationPoint)
-            # Get the customer painted.
-            drawingPoint = Pos.PositionManager.GetInterpolatedPosition(self.__entrancePathes[orientation], 
-                                                                       situations['LastDispatch']['Progress'])
-            Sprite.PaintSprite(surface, self.__custImage, drawingPoint)
+            # Get the customer painted. Do not paint on final frame to avoid artefact on video termination.
+            if situations['LastDispatch']['Progress'] < 1.0:
+                drawingPoint = Pos.PositionManager.GetInterpolatedPosition(self.__entrancePathes[orientation], 
+                                                                           situations['LastDispatch']['Progress'])
+                Sprite.PaintSprite(surface, self.__custImage, drawingPoint)
         
         # Now the cashiers.
         for index, element in enumerate([situations["CashSlow"], situations["CashFast"]]):
