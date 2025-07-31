@@ -34,8 +34,9 @@ The AI can control the dispatcher and cashier:
 
 
 
+https://github.com/user-attachments/assets/aa3a68ee-df2e-464e-a8e8-fae708fc9259
 
-https://github.com/user-attachments/assets/d0c1f168-c139-466a-9e16-39ed5fb28a65
+
 
 
 
@@ -44,7 +45,11 @@ Or it can be in automatic mode, where it dispatches customers in cycles to the d
 
 
 
-https://github.com/user-attachments/assets/76c63028-760c-4d94-94ad-e9c9aefcb578
+
+
+
+https://github.com/user-attachments/assets/b98f1558-6f04-458a-a050-4e679ab65943
+
 
 
 
