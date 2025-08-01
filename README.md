@@ -95,7 +95,7 @@ Also the general termination of the gym is detected by a separate event, as this
 This core concept is reflected in the **step** function of **FrameworkGym**.
 
 As a next step, we want to generate a Video from the simulation. The OpenAI gym already provides this option. Unfortunately, this generates a movie frame after every step call. As we have coupled the Gym with a discrete event simulator in simpy
-The time passed in different calls of the step function may vary significantly. Additionally, for certain aspects, such as moving objects, we want to provide an interpolated transition between states. The way we solved this problem is to generate a log during a trial run, 
+the time passed in different calls of the step function may vary significantly. Additionally, for certain aspects, such as moving objects, we want to provide an interpolated transition between states. The way we solved this problem is to generate a log during a trial run, 
 which logs which object caused which event and when. This log is administered in the class **ScriptRecorder** of the framework. Whenever an actor makes a new decision, the old one is flagged as finished, and a new one begins. This way, continuous transitions can be displayed in
 the visualization. This could be done, for instance, if the event involves walking from A to B. The framework's user must implement this logging and is not limited to actors controlled by the AI. The class **ScriptPlayer** is used later on in the movie system to play back the script.
 
