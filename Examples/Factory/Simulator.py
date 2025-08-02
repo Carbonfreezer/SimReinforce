@@ -70,32 +70,6 @@ class Simulator:
         '''
         return self.__terminationEvent
     
-    @property
-    def TimeOut(self):
-        '''
-        Gives the time out used for deadlock detection.
-
-        Returns
-        -------
-        float
-            Float time for deadlock detection.
-
-        '''
-        return 50.0
-    
-    @property
-    def TimeOutPenalty(self):
-        '''
-        Gives the reward for the case that we run in a timeout and therefore probably a deadlock.
-        Should be calibrated in relation to the rest of the reward.
-
-        Returns
-        -------
-         
-            penalty for dedalock.
-
-        '''
-        return -10.0
     
     @property 
     def MovieScript(self):

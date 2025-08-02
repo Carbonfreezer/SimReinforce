@@ -90,7 +90,7 @@ Simpy is a discreet event simulator. As a next step, we want to create a continu
 The first problem is that OpenAI Gym only supports a single actor. We solve this by adding the actor index for which we want a decision to the observation space. 
 The action space we use is discrete and contains all possible actions for all actors. When an action of a specific actor is required, all other action options are masked out over the maskable 
 PPO algorithm. The specific decisions are then started as a simpy process. As several actors may wait for a new command simultaneously, we maintain a list of actors who are waiting for a command. 
-Once there are no more waiting actors, the simpy environment is run until at least one actor is finished. To prevent deadlocks, we also combine this with a timeout event to detect possible deadlock situations.
+Once there are no more waiting actors, the simpy environment is run until at least one actor is finished. 
 Also the general termination of the gym is detected by a separate event, as this may happen during the action of one of the actors.
 This core concept is reflected in the **step** function of **FrameworkGym**.
 
