@@ -80,7 +80,7 @@ auto mode -0.18.
 - sb3_contrib
 - simpy
 - numpy
-- gamepy
+- pygame
 - moviepy
 
 ## General Strategy
