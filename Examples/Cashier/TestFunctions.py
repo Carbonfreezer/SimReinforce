@@ -5,11 +5,15 @@ Created on Tue Jul 29 07:49:26 2025
 @author: Luerig
 """
 
+import sys
+sys.path.insert(0, '../..')
+
 
 import Framework.GlobalFunctions as Global
 
 from  Examples.Cashier import Simulator
 from Examples.Cashier import Painter
+
 
 
 

@@ -5,6 +5,10 @@ Created on Fri Jul 25 09:13:43 2025
 @author: Luerig
 """
 
+
+import sys
+sys.path.insert(0, '../..')
+
 import Framework.GlobalFunctions as Global
 
 from  Examples.Factory import Simulator
