@@ -18,6 +18,8 @@ import Framework.MovieMaker as Movie
 
 from sb3_contrib.common.maskable.utils import get_action_masks
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv
+
 
 
 def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOargs={}, numOfParallelEnvs = 1,
@@ -55,7 +57,7 @@ def PerformTraining(modelSaveName, generator, optionalArgs = {}, additionalPPOar
         env = Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs)
     else:
         env = make_vec_env(lambda : Frame.FrameworkGym(generator = generator, generateMovieScript=False, additionalOptions=optionalArgs), 
-                           n_envs= numOfParallelEnvs)
+                           n_envs= numOfParallelEnvs, vec_env_cls=SubprocVecEnv)
         
     
     model = MaskablePPO("MultiInputPolicy", env, **additionalPPOargs)
