@@ -29,6 +29,53 @@ def PaintSprite(destination, source, point):
     rect = source.get_rect()
     targetPoint = point - [rect.width * 0.5, rect.height * 0.5]
     destination.blit(source, targetPoint)
+    
+    
+    
+    
+def GetColorizedSprite(source, color):
+    '''
+    Gets a colorized (multiplied) version of a white transparent sprite.
+
+    Parameters
+    ----------
+    source :
+        The sprite we want to colorize
+    color : 
+        The color we want to multiply the sprite with.
+
+    Returns
+    -------
+    proxy : 
+        The colorized sprite.
+
+    '''
+    
+    proxy = pg.Surface(source.get_size())
+    proxy.fill(color)
+    proxy.blit(source, (0, 0), special_flags=pg.BLEND_MULT)
+    return proxy
+
+
+def GetHDBackground(color="Black"):
+    '''
+    Returns an image with default HD resolution and identified color.
+
+    Parameters
+    ----------
+    color :  optional
+        The background color of the background image. The default is "Black".
+
+    Returns
+    -------
+    surface : 
+        Background sprite.
+
+    '''    
+    surface = pg.Surface(1920, 1080)
+    surface.fill(color)
+    return surface
+    
  
     
 
