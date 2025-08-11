@@ -154,10 +154,9 @@ class Simulator:
             # In this case it is a wait command, we do not need anything.
             return
         
-        localAction = localAction - 1
         if actorChosen < 8:
             # This is one of the call takers.
-            self.__incomingCounter[actorChosen] -= 1
+            self.__incomingCounter[localAction - 1] -= 1
         else:
             # In this case we have a dispatcher.
             dispatcher = actorChosen - 8
@@ -171,7 +170,6 @@ class Simulator:
                 # In this case we are relocating a resource. We take one element to do it.
                 self.__resources[1 - dispatcher][localAction - 7] -= 1
                 
-            # Remaining actions are doiung noothing or cancelling a command.
             
     def __ProcessEmergencyRun(self, call):
         '''
@@ -318,7 +316,7 @@ class Simulator:
                     dispatachableCall.append(False)
                     continue
                 # Now we need to check the resources.
-                requiredResources = requiredResources = Simulator.Categories[prio].NeededResources
+                requiredResources = Simulator.Categories[prio].NeededResources
                 dispatachableCall.append(self.__ressources[dispatcher,0] > requiredResources[0] and 
                                          self.__ressources[dispatcher,1] > requiredResources[1])
             # Now we need to check the calls we can cancel.
