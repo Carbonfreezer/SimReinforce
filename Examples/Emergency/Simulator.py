@@ -47,6 +47,12 @@ class Simulator:
     DispatcherCancellationTime = (60.0, 10.0)
     '''The time the dispatcher needs to cancel a task.'''
     
+    RewardCallTaken = 0.01
+    '''The micro reward we get when a call has been taken. '''
+    
+    RewardCallDispatched = 0.01
+    '''The micro reward we get when a call has been dispatched.. '''
+    
     
     def __init__(self, generatesMovie):
         '''
@@ -240,6 +246,7 @@ class Simulator:
                # Inset the information for the call into the correct slot.
                yield self.__callsToDisptach[call.Region][prio].put(call)
                self.__dispatchCounter[call.Region, prio] += 1
+               self.__reward += Simulator.RewardCallTaken
                # Eventually we have to flag the dispatcher, if he is waiting.
                event = self.__dispatcherReactivation[call.Region]
                if  event != None and not event.processed:
@@ -259,6 +266,7 @@ class Simulator:
                self.__dispatchCounter[dispatcher, prio] -= 1
                
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherProcessingTime)
+               self.__reward += Simulator.RewardCallDispatched
                
                # Put the process away.
                self.__callsExecuting[dispatcher][prio].append(call)
@@ -271,6 +279,7 @@ class Simulator:
                jobToCancel.cancellationToken.succeed()
                self.__callsExecuting[dispatcher, localAction - 4] -= 1
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherCancellationTime)
+               self.__reward -= Simulator.RewardCallDispatched
                
                # Get the ressources.
                requiredResources = Simulator.Categories[jobToCancel.Category].NeededResources
