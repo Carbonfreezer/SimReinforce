@@ -326,8 +326,8 @@ class Simulator:
                     continue
                 # Now we need to check the resources.
                 requiredResources = Simulator.Categories[prio].NeededResources
-                dispatachableCall.append(self.__ressources[dispatcher,0] > requiredResources[0] and 
-                                         self.__ressources[dispatcher,1] > requiredResources[1])
+                dispatachableCall.append(self.__ressources[dispatcher,0] >= requiredResources[0] and 
+                                         self.__ressources[dispatcher,1] >= requiredResources[1])
             # Now we need to check the calls we can cancel.
             canceableCalls = [ self.__executingCounter[dispatcher,prio]> 0 for prio in range(3)]
             
@@ -416,8 +416,9 @@ class Simulator:
         '''The global reactivation event for the call dispatcher, if they are in waiting mode. '''
         
         self.__movie = ScriptRecorder.ScriptRecorder(simPyEnv, self.__generatesMovie)
-        # Hier kommen noch Startaktionen rein.
-        self.__incomingCounter = [0,0,0]
+        '''The script recorder module.'''
+     
+        self.__incomingCounter = np.zeros((3,), dtype = np.int32)
         '''The counter with the incoming calls. This is used for action masking and directly manipulated in the prepare call.'''
         self.__callsIncoming = [Store(simPyEnv, Simulator.MaxFillingWaitSlots),
                                 Store(simPyEnv, Simulator.MaxFillingWaitSlots),
@@ -433,12 +434,13 @@ class Simulator:
         self.__callsToDisptach = [[Store(simPyEnv, Simulator.MaxFillingWaitSlots) for _ in range(3)] for _ in range(2)]
         '''Dispatcher array for the different dispatcher structure [dispatcher][prioritySlot]'''
         self.__dispatchCounter = np.zeros((2,3), dtype = np.int32)
+        '''Counter for the calls to be dispatched also used for observations.'''
         
 
         self.__callsExecuting = [[ [] for _ in range(3)] for _ in range(2)]
         '''The different calls that are currently executing. This is a list because there is only one actor accessing it [dispatcher][prioritySlot].'''    
         self.__executingCounter = np.zeros((2,3), dtype = np.int32)
-        
+        '''Counter for the calls currently executed also used for observations.'''
         
         self.__ressources = np.array( [[10,2],[10,2]], dtype = np.int32)
         '''The ressources available of every type. For every dispatcher. [dispatcher][type]'''
