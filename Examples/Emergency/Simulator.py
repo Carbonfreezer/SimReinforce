@@ -6,7 +6,6 @@ Created on Sat Aug  9 14:47:54 2025
 """
 
 import gymnasium as gym
-import simpy
 from simpy.resources.store import Store
 from Framework import ScriptRecorder
 from Framework.Simulation import WaitingModule
@@ -406,6 +405,10 @@ class Simulator:
         self.__waitingModule = WaitingModule.WaitingModule(self.__env, randGen)
         '''The waiting module we use for passing time.'''
         
+        self.__movie = ScriptRecorder.ScriptRecorder(self.__env, self.__generatesMovie)
+        '''The script recorder module.'''
+     
+        
         self.__terminationEvent = self.__env.timeout(Simulator.TotalEpisodeTimes)
         '''When does the episode terminate '''
         
@@ -415,9 +418,7 @@ class Simulator:
         self.__dispatcherReactivation = [None] * 2
         '''The global reactivation event for the call dispatcher, if they are in waiting mode. '''
         
-        self.__movie = ScriptRecorder.ScriptRecorder(simPyEnv, self.__generatesMovie)
-        '''The script recorder module.'''
-     
+       
         self.__incomingCounter = np.zeros((3,), dtype = np.int32)
         '''The counter with the incoming calls. This is used for action masking and directly manipulated in the prepare call.'''
         self.__callsIncoming = [Store(simPyEnv, Simulator.MaxFillingWaitSlots),
@@ -426,10 +427,7 @@ class Simulator:
         '''The different stores with the incoming calls'''
         
         
-        # Start the spawners. 
-        self.__env.process(self.__spawner(0))
-        self.__env.process(self.__spawner(1))
-        self.__env.process(self.__spawner(2))
+      
 
         self.__callsToDisptach = [[Store(simPyEnv, Simulator.MaxFillingWaitSlots) for _ in range(3)] for _ in range(2)]
         '''Dispatcher array for the different dispatcher structure [dispatcher][prioritySlot]'''
@@ -444,6 +442,15 @@ class Simulator:
         
         self.__ressources = np.array( [[10,2],[10,2]], dtype = np.int32)
         '''The ressources available of every type. For every dispatcher. [dispatcher][type]'''
+        
+        # Start the spawners. 
+        self.__env.process(self.__spawner(0))
+        self.__env.process(self.__spawner(1))
+        self.__env.process(self.__spawner(2))
+        
+        
+        
+        # Do the preparation for the movie:
         
         self.__movie.AddAction( 'Time', None)
     
