@@ -162,6 +162,7 @@ class Simulator:
         if actorChosen < 8:
             # This is one of the call takers.
             self.__incomingCounter[localAction - 1] -= 1
+            self.__movie.AddAction(('InCalll', localAction - 1) , self.__incomingCounter[localAction - 1])
         else:
             # In this case we have a dispatcher.
             dispatcher = actorChosen - 8
@@ -197,14 +198,20 @@ class Simulator:
             #reinsert of call to be processed. The job has already been taken out the final que. and resources have already been reassigned.
             yield self.__callsToDisptach[call.Region][call.Category].put(call)
             self.__dispatchCounter[call.Region, call.Category] += 1
+            self.__movie.AddAction(('ToDisptach', call.Region, call.Category), 
+                                   self.__dispatchCounter[call.Region, call.Category])
         else:
             # Return the resoures.
             requiredResources = callInfo.NeededResources
             self.__ressources[call.Region,0] += requiredResources[0]
             self.__ressources[call.Region,1] += requiredResources[1]
+            self.__movie.AddAction(('Resource', call.Region, 0), self.__ressources[call.Region, 0])
+            self.__movie.AddAction(('Resource', call.Region, 1), self.__ressources[call.Region, 1])
             # Remove call.
             self.__callsExecuting[call.Region][call.Category].remove(call)
             self.__executingCounter[call.Region, call.Category] -= 1
+            self.__movie.AddAction(('Running', call.Region, call.Category), 
+                                   self.__executingCounter[call.Region, call.Category] )
             # In this case we take the reward.
             totalTime = self.__env.now - call.StartTime
             self.__reward += callInfo.GetReward(totalTime)
@@ -245,6 +252,8 @@ class Simulator:
                # Inset the information for the call into the correct slot.
                yield self.__callsToDisptach[call.Region][prio].put(call)
                self.__dispatchCounter[call.Region, prio] += 1
+               self.__movie.AddAction(('ToDisptach', call.Region, prio), 
+                                      self.__dispatchCounter[call.Region, prio])
                self.__reward += Simulator.RewardCallTaken
                # Eventually we have to flag the dispatcher, if he is waiting.
                event = self.__dispatcherReactivation[call.Region]
@@ -263,6 +272,7 @@ class Simulator:
                prio = localAction - 1
                call = yield self.__callsToDisptach[dispatcher][prio].get()
                self.__dispatchCounter[dispatcher, prio] -= 1
+               self.__movie.AddAction(('ToDisptach', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
                
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherProcessingTime)
                self.__reward += Simulator.RewardCallDispatched
@@ -270,13 +280,16 @@ class Simulator:
                # Put the process away.
                self.__callsExecuting[dispatcher][prio].append(call)
                self.__executingCounter[dispatcher, prio] += 1
+               self.__movie.AddAction(('Running', dispatcher, prio), self.__executingCounter[dispatcher, prio] )
                call.cancellationToken = self.__env.event()
                self.__env.process(self.__ProcessEmergencyRun(call))
            elif localAction in [4,5,6]:
                # In this case we cancel a job.
                jobToCancel = self.__callsExecuting[dispatcher][localAction - 4].pop(-1)
                jobToCancel.cancellationToken.succeed()
-               self.__callsExecuting[dispatcher, localAction - 4] -= 1
+               self.__callsExecutingCounter[dispatcher, localAction - 4] -= 1
+               self.__movie.AddAction(('Running', dispatcher, localAction - 4), 
+                                      self.__executingCounter[dispatcher, localAction - 4] )
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherCancellationTime)
                self.__reward -= Simulator.RewardCallDispatched
                
@@ -284,11 +297,15 @@ class Simulator:
                requiredResources = Simulator.Categories[jobToCancel.Category].NeededResources
                self.__ressources[dispatcher,0] += requiredResources[0]
                self.__ressources[dispatcher,1] += requiredResources[1]
+               self.__movie.AddAction(('Resource', dispatcher, 0), self.__ressources[dispatcher, 0])
+               self.__movie.AddAction(('Resource', dispatcher, 1), self.__ressources[dispatcher, 1])
            else:
                # In this case we transfer ressources between dispatchers. 
                # Grabbing the resource has already been done.
                yield self.__waitingModule.WaitGamma(Simulator.RessourceTransferTime)
                self.__ressources[dispatcher,localAction - 7] += 1
+               self.__movie.AddAction(('Resource', dispatcher, localAction - 7),
+                                      self.__ressources[dispatcher, localAction - 7])
             
         
       
@@ -377,6 +394,7 @@ class Simulator:
             newCall = EmergencyCall.EmergencyCall(callPrio, self.__env.now, region)
             yield self.__callsIncoming[callPrio].put(newCall)
             self.__incomingCounter[callPrio] += 1
+            self.__movie.AddAction(('InCalll', callPrio) , self.__incomingCounter[callPrio])
             # Trigger waiting call takers.
             for event in self.__callTakeReactivation:
                 if event != None and not event.processed:
@@ -453,6 +471,15 @@ class Simulator:
         # Do the preparation for the movie:
         
         self.__movie.AddAction( 'Time', None)
+        
+        for prio in range(3):
+            self.__movie.AddAction(('InCalll', prio) , self.__incomingCounter[prio])
+            for dispatcher in range(2):
+                self.__movie.AddAction(('ToDisptach', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
+                self.__movie.AddAction(('Running', dispatcher, prio), self.__executingCounter[dispatcher, prio] )
+        for dispatcher in range(2):
+            for res in range(2):
+                self.__movie.AddAction(('Resource', dispatcher, res), self.__ressources[dispatcher, res])
     
         
     
