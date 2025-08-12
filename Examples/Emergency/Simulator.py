@@ -241,6 +241,7 @@ class Simulator:
             if localAction == 0:
                 # In this case we want to wait for a new call coming in.
                 self.__callTakeReactivation[actorChosen] = self.__env.event()
+                self.__movie.AddAction(('CallTaker', actorChosen), 'Idle')
                 yield self.__callTakeReactivation[actorChosen]
                 self.__callTakeReactivation[actorChosen] = None
             else:
@@ -248,8 +249,10 @@ class Simulator:
                prio = localAction - 1
                call = yield self.__callsIncoming[prio].get()
                # Do the call.
+               self.__movie.AddAction(('CallTaker', actorChosen), ('Taking', prio, call.Region))
                yield self.__waitingModule.WaitGamma(Simulator.CalltakerProcessingTime[actorChosen])
                # Inset the information for the call into the correct slot.
+               self.__movie.AddAction(('CallTaker', actorChosen), 'Stalled')
                yield self.__callsToDisptach[call.Region][prio].put(call)
                self.__dispatchCounter[call.Region, prio] += 1
                self.__movie.AddAction(('ToDisptach', call.Region, prio), 
@@ -265,6 +268,7 @@ class Simulator:
            if localAction == 0:
                # The waitng ccase.
                self.__dispatcherReactivation[dispatcher] = self.__env.event()
+               self.__movie.AddAction(('Dispatcher', dispatcher), 'Idle')
                yield self.__dispatcherReactivation[dispatcher]
                self.__dispatcherReactivation[dispatcher] = None         
            elif localAction in [1,2,3]:
@@ -273,7 +277,8 @@ class Simulator:
                call = yield self.__callsToDisptach[dispatcher][prio].get()
                self.__dispatchCounter[dispatcher, prio] -= 1
                self.__movie.AddAction(('ToDisptach', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
-               
+               requiredResources = Simulator.Categories[prio].NeededResources
+               self.__movie.AddAction(('Dispatcher', dispatcher), ('Disptach',prio, requiredResources))
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherProcessingTime)
                self.__reward += Simulator.RewardCallDispatched
                
@@ -287,14 +292,16 @@ class Simulator:
                # In this case we cancel a job.
                jobToCancel = self.__callsExecuting[dispatcher][localAction - 4].pop(-1)
                jobToCancel.cancellationToken.succeed()
+               requiredResources = Simulator.Categories[jobToCancel.Category].NeededResources
                self.__callsExecutingCounter[dispatcher, localAction - 4] -= 1
                self.__movie.AddAction(('Running', dispatcher, localAction - 4), 
                                       self.__executingCounter[dispatcher, localAction - 4] )
+               self.__movie.AddAction(('Dispatcher', dispatcher), ('Cancel',prio, requiredResources))
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherCancellationTime)
                self.__reward -= Simulator.RewardCallDispatched
                
                # Get the ressources.
-               requiredResources = Simulator.Categories[jobToCancel.Category].NeededResources
+             
                self.__ressources[dispatcher,0] += requiredResources[0]
                self.__ressources[dispatcher,1] += requiredResources[1]
                self.__movie.AddAction(('Resource', dispatcher, 0), self.__ressources[dispatcher, 0])
@@ -302,6 +309,7 @@ class Simulator:
            else:
                # In this case we transfer ressources between dispatchers. 
                # Grabbing the resource has already been done.
+               self.__movie.AddAction(('Dispatcher', dispatcher), ('Steel', localAction - 7))
                yield self.__waitingModule.WaitGamma(Simulator.RessourceTransferTime)
                self.__ressources[dispatcher,localAction - 7] += 1
                self.__movie.AddAction(('Resource', dispatcher, localAction - 7),
