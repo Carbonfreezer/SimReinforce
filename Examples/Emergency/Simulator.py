@@ -170,8 +170,8 @@ class Simulator:
             if localAction in [1,2,3]:
                 # In this case we process an incoming call and get the resources.
                 requiredResources = Simulator.Categories[localAction - 1].NeededResources
-                self.__resources[dispatcher][0] -= requiredResources[0]
-                self.__resources[dispatcher][1] -= requiredResources[1]
+                for idx, ressource in enumerate(requiredResources):
+                    self.__resources[dispatcher,idx] -= ressource
             elif localAction > 6:
                 # In this case we are relocating a resource. We take one element to do it.
                 self.__resources[1 - dispatcher][localAction - 7] -= 1
@@ -203,10 +203,10 @@ class Simulator:
         else:
             # Return the resoures.
             requiredResources = callInfo.NeededResources
-            self.__ressources[call.Region,0] += requiredResources[0]
-            self.__ressources[call.Region,1] += requiredResources[1]
-            self.__movie.AddAction(('Resource', call.Region, 0), self.__ressources[call.Region, 0])
-            self.__movie.AddAction(('Resource', call.Region, 1), self.__ressources[call.Region, 1])
+            for idx, ressource in enumerate(requiredResources):
+                self.__resources[call.Region, idx] += ressource
+                self.__movie.AddAction(('Resource', call.Region, idx), self.__ressources[call.Region, idx])
+                
             # Remove call.
             self.__callsExecuting[call.Region][call.Category].remove(call)
             self.__executingCounter[call.Region, call.Category] -= 1
@@ -216,8 +216,13 @@ class Simulator:
             totalTime = self.__env.now - call.StartTime
             self.__reward += callInfo.GetReward(totalTime)
             
+            # We add a finish animation.
+            self.__movie.AddAction(('Finishing', call.Region, call.Category), None )
+            yield self.__env.timeout(10.0)
+            self.__movie.CloseAction(('Finishing', call.Region, call.Category))
+            
         self.cancellationToken = None
-
+        
             
     def PerformAction(self, actorChosen, localAction):
         '''
@@ -301,11 +306,10 @@ class Simulator:
                self.__reward -= Simulator.RewardCallDispatched
                
                # Get the ressources.
+               for idx, ressource in enumerate(requiredResources):
+                   self.__resources[dispatcher, idx] += ressource
+                   self.__movie.AddAction(('Resource', dispatcher, idx), self.__ressources[dispatcher, idx])
              
-               self.__ressources[dispatcher,0] += requiredResources[0]
-               self.__ressources[dispatcher,1] += requiredResources[1]
-               self.__movie.AddAction(('Resource', dispatcher, 0), self.__ressources[dispatcher, 0])
-               self.__movie.AddAction(('Resource', dispatcher, 1), self.__ressources[dispatcher, 1])
            else:
                # In this case we transfer ressources between dispatchers. 
                # Grabbing the resource has already been done.
