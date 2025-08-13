@@ -217,7 +217,7 @@ class Simulator:
             self.__reward += callInfo.GetReward(totalTime)
             
             # We add a finish animation.
-            self.__movie.AddAction(('Finishing', call.Region, call.Category), None )
+            self.__movie.AddAction(('Finishing', call.Region, call.Category), requiredResources )
             yield self.__env.timeout(10.0)
             self.__movie.CloseAction(('Finishing', call.Region, call.Category))
             
@@ -313,7 +313,7 @@ class Simulator:
            else:
                # In this case we transfer ressources between dispatchers. 
                # Grabbing the resource has already been done.
-               self.__movie.AddAction(('Dispatcher', dispatcher), ('Steel', localAction - 7))
+               self.__movie.AddAction(('Dispatcher', dispatcher), ('Steal', localAction - 7))
                yield self.__waitingModule.WaitGamma(Simulator.RessourceTransferTime)
                self.__ressources[dispatcher,localAction - 7] += 1
                self.__movie.AddAction(('Resource', dispatcher, localAction - 7),

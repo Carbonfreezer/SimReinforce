@@ -75,6 +75,33 @@ def GetHDBackground(color="Black"):
     surface = pg.Surface(1920, 1080)
     surface.fill(color)
     return surface
+
+
+def PrintText(surface, text, font, position, color = "White"):
+    '''
+    Prints a text with an indicated font at a specific position.
+
+    Parameters
+    ----------
+    surface : 
+        The destination surface where to print the text to.
+    text : 
+        The text we want to write.
+    font : 
+        The font we write with.
+    position : TYPE
+        Central position to write to.
+    color : optional
+        Printing color. The default is "White".
+
+    Returns
+    -------
+    None.
+
+    '''
+    
+    img = font.render(text, True, color)
+    PaintSprite(surface, img, position)
     
  
     
