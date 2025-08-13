@@ -18,11 +18,11 @@ class Simulator:
     
     
     
-    Categories = [EmergencyCallCategory.EmergencyCallCategory(0,10 * 60 , 1.0, 0.0, 5.0 * 60.0, 15.0*60.0, [1,1], (8.0*60, 120)),
+    Categories = [EmergencyCallCategory.EmergencyCallCategory(0,5 * 60 , 1.0, 0.0, 10.0 * 60.0, 20.0*60.0, [1,1], (8.0*60, 120)),
                   # Gighest priority ambulance and emergency car.
-                  EmergencyCallCategory.EmergencyCallCategory(1,5 * 60,  0.8, 0.2, 5.0 * 60.0, 15.0*60.0, [1,0], (8.0*60, 120)),
+                  EmergencyCallCategory.EmergencyCallCategory(1,2 * 60,  0.8, 0.2, 10.0 * 60.0, 20.0*60.0, [1,0], (8.0*60, 120)),
                   # Second highest priority with ambulance car.
-                  EmergencyCallCategory.EmergencyCallCategory(2,3 * 60,  0.5, 0.3, 5.0 * 60.0, 20.0*60.0, [1,0], (12.0*60, 180)),
+                  EmergencyCallCategory.EmergencyCallCategory(2,1 * 60,  0.5, 0.3, 10.0 * 60.0, 25.0*60.0, [1,0], (12.0*60, 180)),
                   # Third highest priority with ambulance car, no emergeny signal.
                   ]
     
@@ -32,7 +32,7 @@ class Simulator:
     ''' The amount of pending calls / processes we can have of each type. '''
     MaxAmountOfResources = 20
     '''The max amount of resources we can have.'''
-    TotalEpisodeTimes = 60 * 60 * 3
+    TotalEpisodeTimes = 60 * 60 # 60 * 60 * 3
     '''Total time in seconds we want to simulate'''    
     
     CalltakerProcessingTime = [(5 * 60, 2 * 60)] * 8
@@ -41,7 +41,7 @@ class Simulator:
     
     RessourceTransferTime = (60.0, 10.0)
     '''The time needed for the dispatcher to request a ressource transfer'''
-    DispatcherProcessingTime = (2.0 * 60.0, 30.0)
+    DispatcherProcessingTime = (1.5 * 60.0, 30.0)
     '''The time the dispatcher need to dispatch a task.'''
     DispatcherCancellationTime = (60.0, 10.0)
     '''The time the dispatcher needs to cancel a task.'''
@@ -131,7 +131,7 @@ class Simulator:
         '''
         return {'InCalls':  gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(3,), dtype =np.int32),
                 'WaitForDispatch' : gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(2,3), dtype =np.int32),
-                'InProcessing' : gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(2,3), dtype =np.int32),
+                'Processing' : gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(2,3), dtype =np.int32),
                 'RessourcesAvailable' : gym.spaces.Box(0, Simulator.MaxAmountOfResources, shape=(2,2), dtype =np.int32),
                 'Time' : gym.spaces.Box(0.0, 1.0, shape=(1,), dtype =np.float32)
                 }
@@ -162,7 +162,7 @@ class Simulator:
         if actorChosen < 8:
             # This is one of the call takers.
             self.__incomingCounter[localAction - 1] -= 1
-            self.__movie.AddAction(('InCalll', localAction - 1) , self.__incomingCounter[localAction - 1])
+            self.__movie.AddAction(('InCall', localAction - 1) , self.__incomingCounter[localAction - 1])
         else:
             # In this case we have a dispatcher.
             dispatcher = actorChosen - 8
@@ -171,10 +171,12 @@ class Simulator:
                 # In this case we process an incoming call and get the resources.
                 requiredResources = Simulator.Categories[localAction - 1].NeededResources
                 for idx, ressource in enumerate(requiredResources):
-                    self.__resources[dispatcher,idx] -= ressource
+                    self.__ressources[dispatcher,idx] -= ressource
+                    self.__movie.AddAction(('Ressource', dispatcher, idx), self.__ressources[dispatcher, idx])
             elif localAction > 6:
                 # In this case we are relocating a resource. We take one element to do it.
-                self.__resources[1 - dispatcher][localAction - 7] -= 1
+                self.__ressources[1 - dispatcher,localAction - 7] -= 1
+                self.__movie.AddAction(('Ressource', 1 - dispatcher, localAction - 7), self.__ressources[1 - dispatcher, localAction - 7])
                 
             
     def __ProcessEmergencyRun(self, call):
@@ -190,22 +192,18 @@ class Simulator:
         
         callInfo = Simulator.Categories[call.Category]
         # We wait until time is over or we get interrupted.
-        yield self.__waitingModule.WaitGamma(callInfo.NeededTime) | self.cancellationToken
+        yield self.__waitingModule.WaitGamma(callInfo.NeededTime) | call.cancellationToken
         
         
         # Now check, if we were cancelled.
-        if self.cancellationToken.processd:
+        if call.cancellationToken.processed:
             #reinsert of call to be processed. The job has already been taken out the final que. and resources have already been reassigned.
-            yield self.__callsToDisptach[call.Region][call.Category].put(call)
+            yield self.__callsToDispatch[call.Region][call.Category].put(call)
             self.__dispatchCounter[call.Region, call.Category] += 1
-            self.__movie.AddAction(('ToDisptach', call.Region, call.Category), 
+            self.__movie.AddAction(('ToDispatch', call.Region, call.Category), 
                                    self.__dispatchCounter[call.Region, call.Category])
         else:
-            # Return the resoures.
-            requiredResources = callInfo.NeededResources
-            for idx, ressource in enumerate(requiredResources):
-                self.__resources[call.Region, idx] += ressource
-                self.__movie.AddAction(('Resource', call.Region, idx), self.__ressources[call.Region, idx])
+           
                 
             # Remove call.
             self.__callsExecuting[call.Region][call.Category].remove(call)
@@ -216,12 +214,19 @@ class Simulator:
             totalTime = self.__env.now - call.StartTime
             self.__reward += callInfo.GetReward(totalTime)
             
+            # Return the resoures.
+            requiredResources = callInfo.NeededResources
             # We add a finish animation.
-            self.__movie.AddAction(('Finishing', call.Region, call.Category), requiredResources )
-            yield self.__env.timeout(10.0)
-            self.__movie.CloseAction(('Finishing', call.Region, call.Category))
+            actor = ('Finishing', self.__serialNumber)
+            self.__serialNumber += 1
+            self.__movie.AddAction(actor, {'Dispatcher' : call.Region, 'Prio' : call.Category, 'Ressources' : requiredResources} )
+            yield self.__env.timeout(20.0)
+            self.__movie.CloseAction(actor)
+            for idx, ressource in enumerate(requiredResources):
+                self.__ressources[call.Region, idx] += ressource
+                self.__movie.AddAction(('Ressource', call.Region, idx), self.__ressources[call.Region, idx])
             
-        self.cancellationToken = None
+        call.cancellationToken = None
         
             
     def PerformAction(self, actorChosen, localAction):
@@ -258,14 +263,14 @@ class Simulator:
                yield self.__waitingModule.WaitGamma(Simulator.CalltakerProcessingTime[actorChosen])
                # Inset the information for the call into the correct slot.
                self.__movie.AddAction(('CallTaker', actorChosen), 'Stalled')
-               yield self.__callsToDisptach[call.Region][prio].put(call)
+               yield self.__callsToDispatch[call.Region][prio].put(call)
                self.__dispatchCounter[call.Region, prio] += 1
-               self.__movie.AddAction(('ToDisptach', call.Region, prio), 
+               self.__movie.AddAction(('ToDispatch', call.Region, prio), 
                                       self.__dispatchCounter[call.Region, prio])
                self.__reward += Simulator.RewardCallTaken
                # Eventually we have to flag the dispatcher, if he is waiting.
                event = self.__dispatcherReactivation[call.Region]
-               if  event != None and not event.processed:
+               if  event != None and not event.triggered:
                    event.succeed()
         else:
            # This is one of the dispatcher.
@@ -279,11 +284,11 @@ class Simulator:
            elif localAction in [1,2,3]:
                # We take an incoming call and dispatch it. The ressources have already been taken in the preparation stage.
                prio = localAction - 1
-               call = yield self.__callsToDisptach[dispatcher][prio].get()
+               call = yield self.__callsToDispatch[dispatcher][prio].get()
                self.__dispatchCounter[dispatcher, prio] -= 1
-               self.__movie.AddAction(('ToDisptach', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
+               self.__movie.AddAction(('ToDispatch', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
                requiredResources = Simulator.Categories[prio].NeededResources
-               self.__movie.AddAction(('Dispatcher', dispatcher), ('Disptach',prio, requiredResources))
+               self.__movie.AddAction(('Dispatcher', dispatcher), ('Dispatch',prio, requiredResources))
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherProcessingTime)
                self.__reward += Simulator.RewardCallDispatched
                
@@ -295,29 +300,31 @@ class Simulator:
                self.__env.process(self.__ProcessEmergencyRun(call))
            elif localAction in [4,5,6]:
                # In this case we cancel a job.
-               jobToCancel = self.__callsExecuting[dispatcher][localAction - 4].pop(-1)
+               prio = localAction - 4
+               jobToCancel = self.__callsExecuting[dispatcher][prio].pop(-1)
                jobToCancel.cancellationToken.succeed()
                requiredResources = Simulator.Categories[jobToCancel.Category].NeededResources
-               self.__callsExecutingCounter[dispatcher, localAction - 4] -= 1
-               self.__movie.AddAction(('Running', dispatcher, localAction - 4), 
-                                      self.__executingCounter[dispatcher, localAction - 4] )
+               self.__executingCounter[dispatcher, prio] -= 1
+               self.__movie.AddAction(('Running', dispatcher, prio), 
+                                      self.__executingCounter[dispatcher, prio] )
                self.__movie.AddAction(('Dispatcher', dispatcher), ('Cancel',prio, requiredResources))
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherCancellationTime)
                self.__reward -= Simulator.RewardCallDispatched
                
                # Get the ressources.
                for idx, ressource in enumerate(requiredResources):
-                   self.__resources[dispatcher, idx] += ressource
-                   self.__movie.AddAction(('Resource', dispatcher, idx), self.__ressources[dispatcher, idx])
+                   self.__ressources[dispatcher, idx] += ressource
+                   self.__movie.AddAction(('Ressource', dispatcher, idx), self.__ressources[dispatcher, idx])
              
            else:
                # In this case we transfer ressources between dispatchers. 
                # Grabbing the resource has already been done.
-               self.__movie.AddAction(('Dispatcher', dispatcher), ('Steal', localAction - 7))
+               res = localAction - 7
+               self.__movie.AddAction(('Dispatcher', dispatcher), ('Steal', res))
                yield self.__waitingModule.WaitGamma(Simulator.RessourceTransferTime)
-               self.__ressources[dispatcher,localAction - 7] += 1
-               self.__movie.AddAction(('Resource', dispatcher, localAction - 7),
-                                      self.__ressources[dispatcher, localAction - 7])
+               self.__ressources[dispatcher, res] += 1
+               self.__movie.AddAction(('Ressource', dispatcher, res),
+                                      self.__ressources[dispatcher, res])
             
         
       
@@ -406,10 +413,10 @@ class Simulator:
             newCall = EmergencyCall.EmergencyCall(callPrio, self.__env.now, region)
             yield self.__callsIncoming[callPrio].put(newCall)
             self.__incomingCounter[callPrio] += 1
-            self.__movie.AddAction(('InCalll', callPrio) , self.__incomingCounter[callPrio])
+            self.__movie.AddAction(('InCall', callPrio) , self.__incomingCounter[callPrio])
             # Trigger waiting call takers.
             for event in self.__callTakeReactivation:
-                if event != None and not event.processed:
+                if event != None and not event.triggered:
                     event.succeed()
             
             
@@ -459,7 +466,7 @@ class Simulator:
         
       
 
-        self.__callsToDisptach = [[Store(simPyEnv, Simulator.MaxFillingWaitSlots) for _ in range(3)] for _ in range(2)]
+        self.__callsToDispatch = [[Store(simPyEnv, Simulator.MaxFillingWaitSlots) for _ in range(3)] for _ in range(2)]
         '''Dispatcher array for the different dispatcher structure [dispatcher][prioritySlot]'''
         self.__dispatchCounter = np.zeros((2,3), dtype = np.int32)
         '''Counter for the calls to be dispatched also used for observations.'''
@@ -485,13 +492,17 @@ class Simulator:
         self.__movie.AddAction( 'Time', None)
         
         for prio in range(3):
-            self.__movie.AddAction(('InCalll', prio) , self.__incomingCounter[prio])
+            self.__movie.AddAction(('InCall', prio) , self.__incomingCounter[prio])
             for dispatcher in range(2):
-                self.__movie.AddAction(('ToDisptach', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
+                self.__movie.AddAction(('ToDispatch', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
                 self.__movie.AddAction(('Running', dispatcher, prio), self.__executingCounter[dispatcher, prio] )
         for dispatcher in range(2):
             for res in range(2):
-                self.__movie.AddAction(('Resource', dispatcher, res), self.__ressources[dispatcher, res])
+                self.__movie.AddAction(('Ressource', dispatcher, res), self.__ressources[dispatcher, res])
+                
+                
+        self.__serialNumber = 0
+        '''Serial number to distinguish movie action calls'''
     
         
     

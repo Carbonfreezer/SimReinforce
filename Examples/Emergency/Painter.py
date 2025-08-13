@@ -39,7 +39,7 @@ class Painter:
         # The positions for the three incoming calls.
         incomingOffset = 200
         for i in range(3):
-            positionDict[('Incoming', i)] = [stride * 0.5, totalHeight / 2 + (i - 1) * incomingOffset]
+            positionDict[('InCall', i)] = [stride * 0.5, totalHeight / 2 + (i - 1) * incomingOffset]
             
         # The positions for the 8 call takers.
         yStride = totalHeight / 8
@@ -55,7 +55,7 @@ class Painter:
                      [stride * 6.5, dispatcher * (totalHeight / 2) + yStride * (prio + 0.5) ] 
             positionDict[('Dispatcher', dispatcher)] = [stride * 4.5, totalHeight / 2 * (dispatcher + 0.5)]    
             for ressource in range(2):
-                xpos = stride * 5.5 if ressource == 0 else 6.5
+                xpos = stride * ( 3.5 if ressource == 0 else 5.5)
                 ypos = totalHeight / 2 - 150 if dispatcher == 0 else totalHeight / 2 + 150
                 positionDict[('Ressource', dispatcher,ressource)] = [xpos, ypos]
                 
@@ -73,7 +73,7 @@ class Painter:
         
         # The calltaker pathes consisting of prio, callTaker and dispatcher
         self.__callTakerPathes = { (prio, callTaker, dispatcher) : 
-                                  pFunc([('Incoming', prio), ('Taker', callTaker), ('Dispacthed', dispatcher, prio)]) 
+                                  pFunc([('InCall', prio), ('Taker', callTaker), ('Dispatched', dispatcher, prio)]) 
                                   for prio in range(3) for callTaker in range(8) for dispatcher in range(2)}
         
         self.__executionPathes = {(dispatcher, prio) : 
@@ -85,6 +85,10 @@ class Painter:
                                   pFunc([('Ressource', dispatcher, ressource), ('Dispatcher', dispatcher), ('Running', dispatcher, prio)])
                                   for dispatcher in range(2) for prio in range(3) for ressource in range(2)}
             
+        self.__directReturnPathes =  {(dispatcher, prio, ressource):
+                                  pFunc([('Running', dispatcher, prio),('Ressource', dispatcher, ressource)])
+                                  for dispatcher in range(2) for prio in range(3) for ressource in range(2)}   
+            
         self.__finishingPathes = {(dispatcher, prio) :
                                   pFunc([('Running', dispatcher, prio), 'Target']) 
                                   for dispatcher in range(2) for prio in range(3)}
@@ -94,6 +98,8 @@ class Painter:
         highPrioColor = 'red3'
         midPrioColor = 'yellow3'
         lowPrioColor = 'green3'
+        
+        self.__prioColor = [highPrioColor, midPrioColor, lowPrioColor]
         
         idleColor = 'yellow'
         activeColor = 'green'
@@ -105,20 +111,20 @@ class Painter:
         self.__ambulance = pg.image.load("Media/Ambulance.png")
         self.__depot = pg.image.load("Media/Diamond.png")
         
-        callImage = pg.Image.load("Media/Call.png")
+        callImage = pg.image.load("Media/Call.png")
         self.__callImages = [Sprite.GetColorizedSprite(callImage, highPrioColor),
                              Sprite.GetColorizedSprite(callImage, midPrioColor),
                              Sprite.GetColorizedSprite(callImage, lowPrioColor)
                              ]
         
-        slotImage = pg.Image.load("Media/Frame.png")
+        slotImage = pg.image.load("Media/Frame.png")
         self.__finalImage = slotImage
         self.__slotImages = [Sprite.GetColorizedSprite(slotImage, highPrioColor),
                              Sprite.GetColorizedSprite(slotImage, midPrioColor),
                              Sprite.GetColorizedSprite(slotImage, lowPrioColor)
                              ]
         
-        actorImage = pg.Image.load("Media/Circle.png")
+        actorImage = pg.image.load("Media/Circle.png")
         
         self.__actorImages = [Sprite.GetColorizedSprite(actorImage, idleColor),
                              Sprite.GetColorizedSprite(actorImage, activeColor),
@@ -184,7 +190,7 @@ class Painter:
                     position = points(('InCall', prio))
                     Sprite.PaintSprite(surface, self.__slotImages[prio], position)
                     Sprite.PrintText(surface, f"{info['Info']}", self.__font, position)
-                case ('ToDisptach', dispatcher, prio):
+                case ('ToDispatch', dispatcher, prio):
                     position = points(('Dispatched', dispatcher, prio))
                     Sprite.PaintSprite(surface, self.__slotImages[prio], position)
                     Sprite.PrintText(surface, f"{info['Info']}", self.__font, position)
@@ -217,7 +223,7 @@ class Painter:
                             image = self.__actorImages[1]
                         case ('Cancel', _ , _):
                             image = self.__actorImages[2]
-                        case ('Steel', _ ):
+                        case ('Steal', _ ):
                             image = self.__actorImages[3]
                     Sprite.PaintSprite(surface, image, position)
                     
@@ -235,13 +241,18 @@ class Painter:
                     if not isinstance(stat, tuple):
                         continue
                     _ , prio, dispatcher = stat
-                    position = interP(self.__callTakerPathes[( prio, taker, dispatcher)], progress)
+                    
+                    path = self.__callTakerPathes[( prio, taker, dispatcher)]
+                    Sprite.DrawLine(surface, self.__prioColor[prio], path)
+                    position = interP(path, progress)
                     Sprite.PaintSprite(surface, self.__callImages[prio], position)
               
                 case ('Dispatcher', dispatcher):
                     match stat:
                         case ('Dispatch', prio , requiredRessources):
-                            position = interP(self.__executionPathes[(dispatcher, prio)], progress)
+                            path = self.__executionPathes[(dispatcher, prio)]
+                            Sprite.DrawLine(surface, self.__prioColor[prio], path)
+                            position = interP(path, progress)
                             Sprite.PaintSprite(surface, self.__callImages[prio], position)
                             if requiredRessources[0] != 0:
                                 position = interP(self.__resorceAssignmentPathes[(dispatcher, prio, 0)], progress)
@@ -250,7 +261,9 @@ class Painter:
                                 position = interP(self.__resorceAssignmentPathes[(dispatcher, prio, 1)], progress)
                                 Sprite.PaintSprite(surface, self.__car, position)
                         case ('Cancel', prio , requiredRessources):
-                            position = interP(self.__executionPathes[(dispatcher, prio)], 1.0 - progress)
+                            path = self.__executionPathes[(dispatcher, prio)]
+                            Sprite.DrawLine(surface, self.__prioColor[prio], path)
+                            position = interP(path, 1.0 - progress)
                             Sprite.PaintSprite(surface, self.__callImages[prio], position)
                             if requiredRessources[0] != 0:
                                 position = interP(self.__resorceAssignmentPathes[(dispatcher, prio, 0)], 1.0 - progress)
@@ -261,18 +274,24 @@ class Painter:
                         case ('Steal', res):
                             image = self.__ambulance if res == 0 else self.__car
                             interPol = progress if dispatcher == 1 else 1.0 - progress
+                            Sprite.DrawLine(surface, 'White', self.__transferPathes[res])
                             position = interP(self.__transferPathes[res], interPol)
                             Sprite.PaintSprite(surface, image, position)
-                case ('Finishing', dispatcher, prio):
+                case ('Finishing', _):
+                    dispatcher = stat['Dispatcher']
+                    prio = stat['Prio']
+                    res = stat['Ressources']
                     # First the assignment.
-                    position = interP(self.__finishingPathes[(dispatcher, prio)], progress)
+                    path = self.__finishingPathes[(dispatcher, prio)]
+                    Sprite.DrawLine(surface, self.__prioColor[prio], path)
+                    position = interP(path, progress)
                     Sprite.PaintSprite(surface, self.__callImages[prio], position)
                     # Now the remaining ressources get returned.
-                    if stat[0] != 0:
-                        position = interP(self.__resorceAssignmentPathes[(dispatcher, prio, 0)], 1.0 - progress)
+                    if res[0] != 0:
+                        position = interP(self.__directReturnPathes[(dispatcher, prio, 0)], progress)
                         Sprite.PaintSprite(surface, self.__ambulance, position)
-                    if stat[1] != 0:
-                        position = interP(self.__resorceAssignmentPathes[(dispatcher, prio, 1)], 1.0 - progress)
+                    if res[1] != 0:
+                        position = interP(self.__directReturnPathes[(dispatcher, prio, 1)], progress)
                         Sprite.PaintSprite(surface, self.__car, position)
                             
         

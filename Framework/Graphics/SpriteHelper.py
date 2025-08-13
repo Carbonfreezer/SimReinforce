@@ -51,9 +51,9 @@ def GetColorizedSprite(source, color):
 
     '''
     
-    proxy = pg.Surface(source.get_size())
+    proxy = pg.Surface(source.get_size(),  pg.SRCALPHA)
     proxy.fill(color)
-    proxy.blit(source, (0, 0), special_flags=pg.BLEND_MULT)
+    proxy.blit(source, (0, 0), special_flags=pg.BLEND_RGBA_MULT)
     return proxy
 
 
@@ -72,10 +72,34 @@ def GetHDBackground(color="Black"):
         Background sprite.
 
     '''    
-    surface = pg.Surface(1920, 1080)
+    surface = pg.Surface((1920, 1080))
     surface.fill(color)
     return surface
 
+
+def DrawLine(surface, color, path, width=3):
+    '''
+    Draws a line along the indicated path.
+
+    Parameters
+    ----------
+    surface : 
+        Area where to draw to.
+    color : 
+        color to draw
+    path : 
+        Path along to draw.
+    width: optional
+        Line width.
+
+    Returns
+    -------
+    None.
+
+    '''
+    _, segments = path
+    for seg in segments:
+        pg.draw.line(surface, color, seg['Start'], seg['End'], width)
 
 def PrintText(surface, text, font, position, color = "White"):
     '''
