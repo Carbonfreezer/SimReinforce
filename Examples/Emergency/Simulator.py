@@ -130,7 +130,9 @@ class Simulator:
 
         '''
         return {'InCalls':  gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(3,), dtype =np.int32),
+                'TakersStalled': gym.spaces.MultiBinary(8),
                 'WaitForDispatch' : gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(2,3), dtype =np.int32),
+                'Dispatching' : gym.spaces.MultiBinary(2),
                 'Processing' : gym.spaces.Box(0, Simulator.MaxFillingWaitSlots, shape=(2,3), dtype =np.int32),
                 'RessourcesAvailable' : gym.spaces.Box(0, Simulator.MaxAmountOfResources, shape=(2,2), dtype =np.int32),
                 'Time' : gym.spaces.Box(0.0, 1.0, shape=(1,), dtype =np.float32)
@@ -222,6 +224,7 @@ class Simulator:
             self.__movie.AddAction(actor, {'Dispatcher' : call.Region, 'Prio' : call.Category, 'Ressources' : requiredResources} )
             yield self.__env.timeout(20.0)
             self.__movie.CloseAction(actor)
+            self.__movie.AddAction('LastTime', totalTime)
             for idx, ressource in enumerate(requiredResources):
                 self.__ressources[call.Region, idx] += ressource
                 self.__movie.AddAction(('Ressource', call.Region, idx), self.__ressources[call.Region, idx])
@@ -263,7 +266,9 @@ class Simulator:
                yield self.__waitingModule.WaitGamma(Simulator.CalltakerProcessingTime[actorChosen])
                # Inset the information for the call into the correct slot.
                self.__movie.AddAction(('CallTaker', actorChosen), 'Stalled')
+               self.__takersStalled[actorChosen] = True
                yield self.__callsToDispatch[call.Region][prio].put(call)
+               self.__takersStalled[actorChosen] = False
                self.__dispatchCounter[call.Region, prio] += 1
                self.__movie.AddAction(('ToDispatch', call.Region, prio), 
                                       self.__dispatchCounter[call.Region, prio])
@@ -289,7 +294,9 @@ class Simulator:
                self.__movie.AddAction(('ToDispatch', dispatcher, prio), self.__dispatchCounter[dispatcher, prio])
                requiredResources = Simulator.Categories[prio].NeededResources
                self.__movie.AddAction(('Dispatcher', dispatcher), ('Dispatch',prio, requiredResources))
+               self.__currentlyDisptaching[dispatcher] = True
                yield self.__waitingModule.WaitGamma(Simulator.DispatcherProcessingTime)
+               self.__currentlyDisptaching[dispatcher] = False
                self.__reward += Simulator.RewardCallDispatched
                
                # Put the process away.
@@ -449,6 +456,13 @@ class Simulator:
         self.__terminationEvent = self.__env.timeout(Simulator.TotalEpisodeTimes)
         '''When does the episode terminate '''
         
+        
+        self.__takersStalled = [False] * 8
+        '''Here we flag if one of the call takers is stalled.'''
+        
+        self.__currentlyDisptaching = [False, False]
+        '''Flags if the dispatcher is currently dispatching'''
+        
         self.__callTakeReactivation = [None] * 8
         '''The global reactivation event for the call taker, if they are in waiting mode. ''' 
         
@@ -524,7 +538,9 @@ class Simulator:
        
         return {
             'InCalls' : self.__incomingCounter,
+            'TakersStalled': self.__takersStalled,
             'WaitForDispatch' : self.__dispatchCounter,
+            'Dispatching' : self.__currentlyDisptaching,
             'Processing' : self.__executingCounter,
             'RessourcesAvailable' : self.__ressources,
             'Time' : [np.clip(self.__env.now / Simulator.TotalEpisodeTimes, 0.0, 1.0)]

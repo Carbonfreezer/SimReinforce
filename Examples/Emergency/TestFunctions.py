@@ -18,6 +18,7 @@ from Examples.Emergency import Painter
 import torch as th
 
 
+
 if __name__ == '__main__':
     
     policy_kwargs = dict(activation_fn=th.nn.ReLU,
@@ -25,7 +26,7 @@ if __name__ == '__main__':
     
     
     Global.PerformTraining("TestModel", Simulator.Simulator,sizeOfMacroBatch=20_000, 
-                           evaluationRuns=1000, macroBatches=5, numOfParallelEnvs = 2,
+                           evaluationRuns=1000, macroBatches=20, numOfParallelEnvs = 2,
                            additionalPPOargs = { 'policy_kwargs': policy_kwargs})
     Global.GenerateMovie("TestMovie", "TestModel", Simulator.Simulator,  Painter.Painter, 30, 15.0 )
     

@@ -60,6 +60,7 @@ class Painter:
                 positionDict[('Ressource', dispatcher,ressource)] = [xpos, ypos]
                 
         positionDict['Target'] = [stride * 7.5, totalHeight / 2] 
+        positionDict['Time'] = [stride * 7.5, totalHeight / 2 + 100]
         positionDict['Bar'] = [1860, totalHeight / 2] 
                            
       
@@ -186,6 +187,8 @@ class Painter:
         # Now we draw all static parts
         for actor, info in situations.items():
             match actor:
+                case 'LastTime':
+                    Sprite.PrintText(surface, f"T:{(info['Info'] / 60):.2f}", self.__font, points('Time'))
                 case ('InCall', prio):
                     position = points(('InCall', prio))
                     Sprite.PaintSprite(surface, self.__slotImages[prio], position)
